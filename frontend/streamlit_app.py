@@ -164,7 +164,7 @@ def reset_database():
 
 def render_chat_interface():
     """Renderiza a interface principal de chat"""
-    st.title("💬 Chat com seus Documentos (RAG)")
+    st.title("💬 Agente Koper")
     st.caption("Faça perguntas sobre os documentos carregados")
 
     # Renderiza mensagens do histórico

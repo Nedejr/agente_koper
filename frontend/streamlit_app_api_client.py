@@ -103,10 +103,10 @@ def render_sidebar():
         # Seção de upload de arquivos
         st.header("📄 Upload de Documentos")
         uploaded_files = st.file_uploader(
-            "Faça upload de arquivos PDF",
-            type=["pdf"],
+            "Faça upload de arquivos",
+            type=["pdf", "txt", "md", "markdown"],
             accept_multiple_files=True,
-            help="Selecione um ou mais arquivos PDF para processar",
+            help="Selecione arquivos PDF, TXT ou Markdown (.md) para processar",
         )
 
         if uploaded_files:

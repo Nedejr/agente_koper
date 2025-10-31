@@ -1,5 +1,5 @@
 """
-Aplicação Streamlit para Chat RAG com documentos PDF
+Aplicação Streamlit para Chat RAG com documentos (PDF, TXT, Markdown)
 """
 
 # Fallback para sqlite3 (necessário em alguns ambientes como Streamlit Cloud)
@@ -18,7 +18,7 @@ except ImportError:
 import streamlit as st
 
 from backend.config import Config
-from backend.processing import get_document_stats, process_multiple_pdfs
+from backend.processing import get_document_stats, process_multiple_files
 from backend.qa import ask_question
 from backend.vector_store import (
     add_to_vector_store,
@@ -51,10 +51,10 @@ def render_sidebar():
         # Seção de upload de arquivos
         st.header("📄 Upload de Documentos")
         uploaded_files = st.file_uploader(
-            "Faça upload de arquivos PDF",
-            type=["pdf"],
+            "Faça upload de arquivos",
+            type=["pdf", "txt", "md", "markdown"],
             accept_multiple_files=True,
-            help="Selecione um ou mais arquivos PDF para processar",
+            help="Selecione arquivos PDF, TXT ou Markdown (.md) para processar",
         )
 
         if uploaded_files:
@@ -104,11 +104,11 @@ def render_sidebar():
 
 
 def process_documents(uploaded_files):
-    """Processa os documentos enviados"""
+    """Processa os documentos enviados (PDF, TXT, Markdown)"""
     with st.spinner("🔄 Processando documentos..."):
         try:
-            # Processa os PDFs
-            chunks = process_multiple_pdfs(uploaded_files)
+            # Processa os arquivos
+            chunks = process_multiple_files(uploaded_files)
 
             # Obtém estatísticas
             stats = get_document_stats(chunks)

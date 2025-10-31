@@ -1,6 +1,6 @@
-# 🤖 Agente Koper - Chat RAG com PDFs
+# 🤖 Agente Koper - Chat RAG com Documentos
 
-Sistema de Retrieval-Augmented Generation (RAG) para fazer perguntas sobre documentos PDF usando LangChain e OpenAI.
+Sistema de Retrieval-Augmented Generation (RAG) para fazer perguntas sobre documentos (PDF, TXT, Markdown) usando LangChain e OpenAI.
 
 ## ️ Estrutura do Projeto
 
@@ -8,7 +8,7 @@ Sistema de Retrieval-Augmented Generation (RAG) para fazer perguntas sobre docum
 agente_koper/
 ├── backend/                    # Lógica de negócio
 │   ├── config.py              # Configurações centralizadas
-│   ├── processing.py          # Processamento de PDFs
+│   ├── processing.py          # Processamento de documentos (PDF, TXT, MD)
 │   ├── vector_store.py        # Gerenciamento do ChromaDB
 │   └── qa.py                  # Sistema de perguntas e respostas
 ├── frontend/                   
@@ -69,7 +69,7 @@ Acesse: **http://localhost:8501**
 
 ## 💻 Como Usar
 
-1. **Upload PDF**: Clique em "Browse files" na sidebar e selecione seus PDFs
+1. **Upload**: Clique em "Browse files" na sidebar e selecione seus documentos (PDF, TXT ou Markdown)
 2. **Processar**: Clique em "🚀 Processar Documentos"
 3. **Perguntar**: Digite suas perguntas no chat
 4. **Configurar**: Escolha o modelo (GPT-3.5/4o) e ajuste a temperatura
@@ -89,12 +89,13 @@ TEMPERATURE=0.7            # Criatividade (0-1)
 
 ## 🎯 Funcionalidades
 
-- ✅ Upload de múltiplos PDFs
+- ✅ Upload de múltiplos documentos (PDF, TXT, Markdown)
 - ✅ Processamento e chunking inteligente
 - ✅ Busca semântica com ChromaDB
 - ✅ Chat com histórico de conversa
-- ✅ Múltiplos modelos OpenAI
+- ✅ Múltiplos modelos OpenAI (GPT-3.5, GPT-4, GPT-4o)
 - ✅ Interface intuitiva
+- ✅ Suporte a formatação Markdown preservando estrutura
 
 ## � Tecnologias Utilizadas
 

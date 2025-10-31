@@ -11,7 +11,6 @@ import os
 
 # Imports do backend
 import sys
-import tempfile
 from typing import List, Optional
 
 from fastapi import FastAPI, File, HTTPException, UploadFile
@@ -21,7 +20,12 @@ from pydantic import BaseModel
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
 from backend.config import Config
-from backend.processing import get_document_stats, process_pdf_file
+from backend.processing import (
+    get_document_stats,
+    process_markdown_file,
+    process_pdf_file,
+    process_txt_file,
+)
 from backend.qa import ask_question
 from backend.vector_store import (
     add_to_vector_store,
@@ -131,25 +135,40 @@ async def upload_documents(files: List[UploadFile] = File(...)):
 
         # Processa cada arquivo
         for file in files:
-            if not file.filename.endswith(".pdf"):
+            # Detecta extensão do arquivo
+            file_extension = file.filename.split(".")[-1].lower()
+            
+            if file_extension not in ["pdf", "txt", "md", "markdown"]:
                 raise HTTPException(
-                    status_code=400, detail=f"Arquivo {file.filename} não é PDF"
+                    status_code=400,
+                    detail=f"Tipo de arquivo não suportado: {file.filename}. Use PDF, TXT ou Markdown.",
                 )
 
-            # Salva temporariamente
-            with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
-                content = await file.read()
-                tmp.write(content)
-                tmp_path = tmp.name
+            # Lê o conteúdo
+            content = await file.read()
 
-            # Processa
+            # Processa de acordo com o tipo
             try:
                 from io import BytesIO
 
-                chunks = process_pdf_file(BytesIO(content))
+                # Cria objeto file-like
+                file_like = BytesIO(content)
+                file_like.name = file.filename
+
+                if file_extension == "pdf":
+                    chunks = process_pdf_file(file_like)
+                elif file_extension == "txt":
+                    chunks = process_txt_file(file_like)
+                elif file_extension in ["md", "markdown"]:
+                    chunks = process_markdown_file(file_like)
+
                 all_chunks.extend(chunks)
-            finally:
-                os.remove(tmp_path)
+
+            except Exception as e:
+                raise HTTPException(
+                    status_code=500,
+                    detail=f"Erro ao processar {file.filename}: {str(e)}",
+                )
 
         # Obtém estatísticas
         stats = get_document_stats(all_chunks)

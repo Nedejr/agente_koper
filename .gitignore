@@ -1,0 +1,49 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Ambiente virtual
+venv/
+.venv/
+env/
+ENV/
+
+# Variáveis de ambiente
+.env
+
+# ChromaDB
+db/
+*.db
+*.sqlite3
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Streamlit
+.streamlit/
+
+# Temporários
+tmp/
+temp/
+*.tmp

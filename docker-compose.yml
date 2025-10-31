@@ -1,0 +1,68 @@
+version: "3.8"
+
+services:
+  # Versão Monorepo - Streamlit standalone
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: agente_koper_app
+    ports:
+      - "8501:8501"
+    volumes:
+      - ./db:/app/db
+      - ./backend:/app/backend
+      - ./frontend:/app/frontend
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - PERSIST_DIR=db
+      - CHUNK_SIZE=1000
+      - CHUNK_OVERLAP=400
+      - TEMPERATURE=0.7
+    restart: unless-stopped
+    networks:
+      - agente_koper_network
+
+  # Backend API (FastAPI) - descomente para usar versão separada
+  # backend_api:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile.api
+  #   container_name: agente_koper_backend
+  #   ports:
+  #     - "8000:8000"
+  #   volumes:
+  #     - ./db:/app/db
+  #     - ./backend:/app/backend
+  #     - ./backend_api:/app/backend_api
+  #   environment:
+  #     - OPENAI_API_KEY=${OPENAI_API_KEY}
+  #     - PERSIST_DIR=db
+  #   restart: unless-stopped
+  #   networks:
+  #     - agente_koper_network
+
+  # Frontend Streamlit (API Client) - descomente para usar versão separada
+  # frontend_api:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile.frontend
+  #   container_name: agente_koper_frontend
+  #   ports:
+  #     - "8501:8501"
+  #   volumes:
+  #     - ./frontend:/app/frontend
+  #   environment:
+  #     - API_URL=http://backend_api:8000
+  #   depends_on:
+  #     - backend_api
+  #   restart: unless-stopped
+  #   networks:
+  #     - agente_koper_network
+
+networks:
+  agente_koper_network:
+    driver: bridge
+
+volumes:
+  db_data:

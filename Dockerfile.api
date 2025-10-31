@@ -1,0 +1,25 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Instala dependências do sistema
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copia requirements e instala dependências Python
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir fastapi uvicorn[standard] python-multipart
+
+# Copia o código da aplicação
+COPY . .
+
+# Cria diretório para o database
+RUN mkdir -p db
+
+# Expõe a porta da API
+EXPOSE 8000
+
+# Comando para iniciar o FastAPI
+CMD ["uvicorn", "backend_api.app:app", "--host", "0.0.0.0", "--port", "8000"]

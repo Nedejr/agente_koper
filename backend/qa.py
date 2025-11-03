@@ -104,21 +104,31 @@ def ask_question(
     # Formata o contexto
     context = "\n\n".join([doc.page_content for doc in docs])
 
-    # Constrói as mensagens
-    messages = [("system", system_prompt.replace("{context}", context))]
+    # Escapa chaves em contexto/histórico/pergunta para evitar erros de str.format
+    def _escape_braces(s: str) -> str:
+        if not isinstance(s, str):
+            return s
+        return s.replace("{", "{{").replace("}", "}}")
+
+    # Constrói as mensagens (insere contexto protegido)
+    safe_context = _escape_braces(context)
+    messages = [("system", system_prompt.replace("{context}", safe_context))]
 
     # Adiciona histórico
     if chat_history:
         for message in chat_history:
             role = message.get("role")
             content = message.get("content")
+            # Escapa chaves no histórico
+            content = _escape_braces(content)
             if role == "user":
                 messages.append(("human", content))
             elif role == "ai":
                 messages.append(("assistant", content))
 
     # Adiciona a pergunta atual
-    messages.append(("human", query))
+    # Adiciona a pergunta atual (escapando chaves)
+    messages.append(("human", _escape_braces(query)))
 
     # Cria o prompt e executa
     prompt = ChatPromptTemplate.from_messages(messages)

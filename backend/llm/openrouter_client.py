@@ -3,6 +3,7 @@ OpenRouter Client
 Interface for communication with OpenRouter API
 """
 
+import asyncio
 from typing import Any, Dict, List, Optional
 
 import httpx

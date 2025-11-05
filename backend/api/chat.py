@@ -1,25 +1,29 @@
 """
 Chat API
-Endpoints para interação com o chatbot
+Endpoints for chatbot interaction with LangGraph agent
 """
 
 import time
+from datetime import datetime
 from typing import Dict
 from uuid import uuid4
 
 from fastapi import APIRouter, HTTPException, status
 
+from backend.agent.graph import run_agent
 from backend.models.chat import (
     AgentDecision,
+    ChatMessage,
     ChatRequest,
     ChatResponse,
     ConversationHistory,
+    MessageRole,
 )
 from backend.utils.logger import log
 
 router = APIRouter()
 
-# Storage temporário de conversas (em produção, usar Redis ou banco de dados)
+# Temporary conversation storage (use Redis or database in production)
 conversations: Dict[str, ConversationHistory] = {}
 
 
@@ -27,58 +31,89 @@ conversations: Dict[str, ConversationHistory] = {}
     "/chat",
     response_model=ChatResponse,
     status_code=status.HTTP_200_OK,
-    summary="Enviar mensagem ao chat",
-    description="Envia uma mensagem ao agente e recebe resposta"
+    summary="Send message to chat",
+    description="Send a message to the agent and receive response"
 )
 async def chat(request: ChatRequest):
     """
-    Endpoint principal de chat
+    Main chat endpoint
     
-    - Recebe mensagem do usuário
-    - Processa através do agente LangGraph
-    - Retorna resposta com decisão do agente
+    - Receives user message
+    - Processes through LangGraph agent
+    - Returns response with agent decision
     """
     start_time = time.time()
     
-    # Gera conversation_id se não fornecido
+    # Generate conversation_id if not provided
     conversation_id = request.conversation_id or f"conv-{uuid4().hex[:12]}"
     
-    log.info(f"💬 Nova mensagem - Conv: {conversation_id} | User: {request.user_id or 'anonymous'}")
-    log.debug(f"Mensagem: {request.message}")
+    log.info(f"💬 New message - Conv: {conversation_id} | User: {request.user_id or 'anonymous'}")
+    log.debug(f"Message: {request.message}")
     
     try:
-        # TODO: Integrar com o agente LangGraph
-        # Por enquanto, resposta mock para teste
-        
-        # Simula processamento
-        response_message = (
-            "Olá! Sou o assistente do Koper ERP. "
-            "Estou em fase de desenvolvimento e em breve poderei ajudá-lo com suas dúvidas sobre o sistema. "
-            "Por enquanto, estou apenas testando a infraestrutura básica."
+        # Run LangGraph agent
+        agent_result = await run_agent(
+            user_message=request.message,
+            conversation_id=conversation_id
         )
         
-        # Calcula tempo de processamento
+        # Extract response from agent state
+        response_message = agent_result.get("response", "Sorry, I couldn't generate a response.")
+        agent_decision_str = agent_result.get("agent_decision", "answer")
+        sources = agent_result.get("sources", [])
+        evaluator_confidence = agent_result.get("evaluator_confidence")
+        
+        # Map agent decision to enum
+        decision_map = {
+            "answer": AgentDecision.ANSWER,
+            "human_handoff": AgentDecision.HUMAN_HANDOFF,
+            "off_topic": AgentDecision.OFF_TOPIC,
+        }
+        agent_decision = decision_map.get(agent_decision_str, AgentDecision.ANSWER)
+        
+        # Calculate processing time
         processing_time = int((time.time() - start_time) * 1000)
         
-        # Cria resposta
+        # Store conversation
+        if conversation_id not in conversations:
+            conversations[conversation_id] = ConversationHistory(
+                conversation_id=conversation_id,
+                messages=[],
+                user_id=request.user_id,
+            )
+        
+        # Add messages to history
+        conversations[conversation_id]["messages"].append(
+            ChatMessage(role=MessageRole.USER, content=request.message)
+        )
+        conversations[conversation_id]["messages"].append(
+            ChatMessage(role=MessageRole.ASSISTANT, content=response_message)
+        )
+        conversations[conversation_id]["updated_at"] = datetime.utcnow()
+        
+        # Create response
         response = ChatResponse(
             conversation_id=conversation_id,
             message=response_message,
-            agent_decision=AgentDecision.ANSWER,
-            sources=None,
-            confidence_score=1.0,
+            agent_decision=agent_decision,
+            sources=sources if sources else None,
+            confidence_score=evaluator_confidence,
             processing_time_ms=processing_time,
         )
         
-        log.info(f"✅ Resposta gerada - Tempo: {processing_time}ms")
+        log.info(
+            f"✅ Response generated - "
+            f"Decision: {agent_decision.value} | "
+            f"Time: {processing_time}ms"
+        )
         
         return response
         
     except Exception as e:
-        log.error(f"❌ Erro ao processar mensagem: {str(e)}", exc_info=True)
+        log.error(f"❌ Error processing message: {str(e)}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Erro ao processar mensagem: {str(e)}"
+            detail=f"Error processing message: {str(e)}"
         )
 
 

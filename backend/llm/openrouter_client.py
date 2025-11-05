@@ -114,7 +114,37 @@ class OpenRouterClient:
             log.error(f"⏱️  Timeout on OpenRouter request: {str(e)}")
             raise Exception(f"Timeout generating response: {str(e)}")
         except httpx.HTTPStatusError as e:
-            log.error(f"❌ HTTP error from OpenRouter: {e.response.status_code}")
+            status_code = e.response.status_code
+            
+            # Se for 429 (rate limit), tenta com retry
+            if status_code == 429:
+                log.warning(f"⚠️ Rate limit (429) - Tentando retry...")
+                # Tenta mais 2 vezes com backoff exponencial
+                for attempt in range(1, 3):
+                    wait_time = 2 ** attempt  # 2s, 4s
+                    log.info(f"⏳ Aguardando {wait_time}s antes de retry {attempt}/2...")
+                    await asyncio.sleep(wait_time)
+                    
+                    try:
+                        async with httpx.AsyncClient(timeout=self.timeout) as retry_client:
+                            response = await retry_client.post(
+                                url,
+                                headers=self._get_headers(),
+                                json=payload
+                            )
+                            response.raise_for_status()
+                            result = response.json()
+                            generated_text = result["choices"][0]["message"]["content"]
+                            log.info(f"✅ Retry {attempt} bem-sucedido!")
+                            return generated_text
+                    except httpx.HTTPStatusError as retry_error:
+                        if retry_error.response.status_code == 429:
+                            continue  # Tenta próximo retry
+                        raise
+                    except Exception:
+                        continue
+            
+            log.error(f"❌ HTTP error from OpenRouter: {status_code}")
             error_detail = e.response.json() if e.response.content else str(e)
             raise Exception(f"Error generating response: {error_detail}")
         except Exception as e:

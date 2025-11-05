@@ -236,7 +236,8 @@ class Indexer:
         # Prepare points for Qdrant
         points = []
         for i, (chunk, embedding) in enumerate(zip(chunks, embeddings)):
-            point_id = f"{document_id}_chunk_{i}"
+            # Qdrant requires UUID or unsigned int for IDs
+            point_id = str(uuid4())
             
             points.append({
                 "id": point_id,
@@ -246,6 +247,7 @@ class Indexer:
                     "metadata": chunk.metadata,
                     "document_id": document_id,
                     "chunk_index": i,
+                    "point_id_str": f"{document_id}_chunk_{i}",  # Keep string ID in payload for reference
                 }
             })
         

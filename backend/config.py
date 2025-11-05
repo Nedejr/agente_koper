@@ -36,20 +36,22 @@ class Settings(BaseSettings):
     openrouter_api_key: str = Field(default="", alias="OPENROUTER_API_KEY")
     openrouter_base_url: str = Field(default="https://openrouter.ai/api/v1")
     openrouter_default_model: str = Field(
-        default="meta-llama/llama-3.2-3b-instruct:free",
+        default="meta-llama/llama-3.3-8b-instruct:free",
         alias="OPENROUTER_DEFAULT_MODEL"
     )
     openrouter_timeout: int = Field(default=120)  # segundos
     openrouter_temperature: float = Field(default=0.7)
     
-    # Available free models (verified working)
+    # Available free models (verified working - checked 2025-11-05)
     openrouter_free_models: list[str] = Field(default=[
-        "meta-llama/llama-3.2-3b-instruct:free",
-        "meta-llama/llama-3.2-1b-instruct:free",
-        "google/gemma-2-9b-it:free",
-        "mistralai/mistral-7b-instruct:free",
-        "qwen/qwen-2-7b-instruct:free",
-        "microsoft/phi-3-mini-128k-instruct:free",
+        "meta-llama/llama-3.3-8b-instruct:free",
+        "deepseek/deepseek-chat-v3.1:free",
+        "mistralai/mistral-small-3.2-24b-instruct:free",
+        "qwen/qwen3-30b-a3b:free",
+        "nvidia/nemotron-nano-12b-v2-vl:free",
+        "minimax/minimax-m2:free",
+        "google/gemma-3n-e4b-it:free",
+        "qwen/qwen3-coder:free",
     ])
     
     # ============================================
@@ -77,7 +79,7 @@ class Settings(BaseSettings):
     chunk_size: int = Field(default=1000, alias="CHUNK_SIZE")
     chunk_overlap: int = Field(default=200, alias="CHUNK_OVERLAP")
     top_k_results: int = Field(default=5, alias="TOP_K_RESULTS")
-    min_similarity_score: float = Field(default=0.7, alias="MIN_SIMILARITY_SCORE")
+    min_similarity_score: float = Field(default=0.3, alias="MIN_SIMILARITY_SCORE")  # Lowered for better retrieval
     
     # ============================================
     # Agent Settings

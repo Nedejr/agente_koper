@@ -31,7 +31,7 @@ def initialize_session_state():
         st.session_state["conversation_id"] = f"conv-{int(time.time())}"
     
     if "selected_model" not in st.session_state:
-        st.session_state["selected_model"] = "meta-llama/llama-3.2-3b-instruct:free"
+        st.session_state["selected_model"] = "meta-llama/llama-3.3-8b-instruct:free"
 
 
 def check_api_health() -> dict:
@@ -107,14 +107,16 @@ def render_sidebar():
         # Seleção de modelo
         st.header("🤖 Modelo")
         
-        # Define modelos disponíveis com nomes amigáveis
+        # Define modelos disponíveis com nomes amigáveis (verificados 2025-11-05)
         models_dict = {
-            "meta-llama/llama-3.2-3b-instruct:free": "⭐ Meta Llama 3.2 3B (Recomendado)",
-            "meta-llama/llama-3.2-1b-instruct:free": "Meta Llama 3.2 1B (Rápido)",
-            "google/gemma-2-9b-it:free": "⭐ Google Gemma 2 9B (Poderoso)",
-            "mistralai/mistral-7b-instruct:free": "Mistral 7B",
-            "qwen/qwen-2-7b-instruct:free": "Qwen 2 7B",
-            "microsoft/phi-3-mini-128k-instruct:free": "Microsoft Phi-3 Mini",
+            "meta-llama/llama-3.3-8b-instruct:free": "⭐ Meta Llama 3.3 8B (Recomendado)",
+            "deepseek/deepseek-chat-v3.1:free": "⭐ DeepSeek Chat v3.1 (Poderoso)",
+            "mistralai/mistral-small-3.2-24b-instruct:free": "Mistral Small 3.2 24B (Grande)",
+            "qwen/qwen3-30b-a3b:free": "Qwen3 30B",
+            "nvidia/nemotron-nano-12b-v2-vl:free": "NVIDIA Nemotron 12B VL",
+            "minimax/minimax-m2:free": "MiniMax M2",
+            "google/gemma-3n-e4b-it:free": "Google Gemma 3N 4B",
+            "qwen/qwen3-coder:free": "Qwen3 Coder (Técnico)",
         }
         
         # Modelo selecionado
@@ -130,12 +132,14 @@ def render_sidebar():
         
         # Mostra info do modelo
         model_info = {
-            "meta-llama/llama-3.2-3b-instruct:free": "Rápido e eficiente para conversação. Contexto: 128k tokens",
-            "meta-llama/llama-3.2-1b-instruct:free": "Muito rápido, ideal para respostas simples. Contexto: 128k tokens",
-            "google/gemma-2-9b-it:free": "Ótimo raciocínio e instruções complexas. Contexto: 8k tokens",
-            "mistralai/mistral-7b-instruct:free": "Compacto e eficiente para RAG. Contexto: 32k tokens",
-            "qwen/qwen-2-7b-instruct:free": "Bom balanço qualidade/velocidade. Contexto: 32k tokens",
-            "microsoft/phi-3-mini-128k-instruct:free": "Grande contexto, compacto. Contexto: 128k tokens",
+            "meta-llama/llama-3.3-8b-instruct:free": "Rápido e eficiente para conversação. Contexto: 128k tokens",
+            "deepseek/deepseek-chat-v3.1:free": "Excelente para raciocínio complexo e análise. Alto desempenho",
+            "mistralai/mistral-small-3.2-24b-instruct:free": "Modelo grande, ótimo para tarefas complexas",
+            "qwen/qwen3-30b-a3b:free": "Modelo robusto para conversação avançada",
+            "nvidia/nemotron-nano-12b-v2-vl:free": "Suporta visão e linguagem",
+            "minimax/minimax-m2:free": "Bom balanço entre qualidade e velocidade",
+            "google/gemma-3n-e4b-it:free": "Eficiente e rápido do Google",
+            "qwen/qwen3-coder:free": "Especializado em código e tarefas técnicas",
         }
         st.caption(model_info.get(selected_model_name, ""))
         

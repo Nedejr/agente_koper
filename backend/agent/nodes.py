@@ -236,13 +236,20 @@ async def evaluator_node(state: AgentState) -> Dict[str, Any]:
         
     except Exception as e:
         log.error(f"❌ [EVALUATOR] Error: {str(e)}")
+        # Em caso de erro (rate limit, etc), assume que documentos são suficientes
+        # se foram recuperados com score razoável
         steps = state.get("processing_steps", [])
         steps.append("evaluator_error")
+        
+        # Se temos documentos com score > 0.5, considera suficiente mesmo com erro no evaluator
+        retrieval_score = state.get("retrieval_score", 0.0)
+        has_sufficient = retrieval_score >= 0.5
+        
         return {
-            "has_sufficient_info": False,
-            "evaluator_confidence": 0.0,
+            "has_sufficient_info": has_sufficient,
+            "evaluator_confidence": retrieval_score if has_sufficient else 0.0,
             "processing_steps": steps,
-            "error": f"Evaluator error: {str(e)}",
+            "error": f"Evaluator error (using fallback): {str(e)}",
         }
 
 

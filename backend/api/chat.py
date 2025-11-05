@@ -84,13 +84,13 @@ async def chat(request: ChatRequest):
             )
         
         # Add messages to history
-        conversations[conversation_id]["messages"].append(
+        conversations[conversation_id].messages.append(
             ChatMessage(role=MessageRole.USER, content=request.message)
         )
-        conversations[conversation_id]["messages"].append(
+        conversations[conversation_id].messages.append(
             ChatMessage(role=MessageRole.ASSISTANT, content=response_message)
         )
-        conversations[conversation_id]["updated_at"] = datetime.utcnow()
+        conversations[conversation_id].updated_at = datetime.utcnow()
         
         # Create response
         response = ChatResponse(

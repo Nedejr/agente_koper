@@ -42,7 +42,7 @@ services:
     environment:
       # OpenRouter
       - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
-      - OPENROUTER_DEFAULT_MODEL=${OPENROUTER_DEFAULT_MODEL:-meta-llama/llama-3.1-8b-instruct:free}
+      - OPENROUTER_DEFAULT_MODEL=${OPENROUTER_DEFAULT_MODEL:-meta-llama/llama-3.3-8b-instruct:free}
       
       # Qdrant
       - QDRANT_HOST=qdrant
@@ -59,7 +59,7 @@ services:
       - CHUNK_SIZE=${CHUNK_SIZE:-1000}
       - CHUNK_OVERLAP=${CHUNK_OVERLAP:-200}
       - TOP_K_RESULTS=${TOP_K_RESULTS:-5}
-      - MIN_SIMILARITY_SCORE=${MIN_SIMILARITY_SCORE:-0.7}
+      - MIN_SIMILARITY_SCORE=${MIN_SIMILARITY_SCORE:-0.3}
       
       # Agent Settings
       - CLASSIFIER_THRESHOLD=${CLASSIFIER_THRESHOLD:-0.6}

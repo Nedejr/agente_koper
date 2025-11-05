@@ -1,6 +1,6 @@
 # 🤖 Agente Koper - Chatbot RAG com LangGraph
 
-Sistema inteligente de atendimento usando **Retrieval-Augmented Generation (RAG)** para responder dúvidas sobre o **Koper ERP**. Construído com **LangChain**, **LangGraph**, **Next.js 16**, e **Ollama Llama3** local.
+Sistema inteligente de atendimento usando **Retrieval-Augmented Generation (RAG)** para responder dúvidas sobre o **Koper ERP**. Construído com **LangChain**, **LangGraph**, **Streamlit**, e **OpenRouter** com múltiplos modelos gratuitos.
 
 ---
 
@@ -12,16 +12,16 @@ Sistema inteligente de atendimento usando **Retrieval-Augmented Generation (RAG)
 ├─────────────────────────────────────────────────────────────┤
 │                                                               │
 │  ┌──────────────┐   ┌──────────────┐   ┌──────────────┐    │
-│  │   Next.js    │   │   FastAPI    │   │   Qdrant     │    │
+│  │  Streamlit   │   │   FastAPI    │   │   Qdrant     │    │
 │  │  Frontend    │──▶│   Backend    │──▶│ Vector Store │    │
-│  │  (Port 3000) │   │  (Port 8000) │   │  (Port 6333) │    │
+│  │  (Port 8501) │   │  (Port 8000) │   │  (Port 6333) │    │
 │  └──────────────┘   └──────┬───────┘   └──────────────┘    │
 │                             │                                 │
 │                             ▼                                 │
 │                     ┌──────────────┐                         │
-│                     │    Ollama    │                         │
-│                     │  Llama3 LLM  │                         │
-│                     │ (Port 11434) │                         │
+│                     │  OpenRouter  │                         │
+│                     │  Cloud API   │                         │
+│                     │ (6 modelos)  │                         │
 │                     └──────────────┘                         │
 │                                                               │
 └─────────────────────────────────────────────────────────────┘
@@ -44,7 +44,12 @@ cd agente_koper
 cp .env.example .env
 ```
 
-Edite o arquivo `.env` se necessário (valores padrão já funcionam).
+**IMPORTANTE**: Edite o arquivo `.env` e adicione sua chave da OpenRouter:
+
+1. Acesse [https://openrouter.ai/keys](https://openrouter.ai/keys)
+2. Crie uma conta (gratuita)
+3. Gere uma API key
+4. Adicione no `.env`: `OPENROUTER_API_KEY=sua_chave_aqui`
 
 ### 3️⃣ Inicie todos os serviços com Docker
 
@@ -64,7 +69,7 @@ Aguarde até ver: ✅ **"Modelo Llama3 instalado com sucesso!"**
 
 ### 5️⃣ Acesse a aplicação
 
-- 🖥️ **Frontend (Next.js)**: http://localhost:3000
+- 🖥️ **Frontend (Streamlit)**: http://localhost:8501
 - 🔌 **Backend API**: http://localhost:8000/docs
 - 🗄️ **Qdrant Dashboard**: http://localhost:6333/dashboard
 
@@ -78,16 +83,9 @@ agente_koper/
 ├── .env.example               # Template de variáveis
 ├── .dockerignore              # Otimização de builds
 │
-├── frontend/                  # Next.js 16 Application
-│   ├── Dockerfile
-│   ├── package.json
-│   ├── src/
-│   │   ├── app/              # App Router
-│   │   │   ├── page.tsx      # Chat interface
-│   │   │   └── admin/        # Admin panel
-│   │   ├── components/       # React components
-│   │   └── lib/              # API client & utils
-│   └── public/
+├── frontend/                  # Streamlit Application
+│   ├── streamlit_app.py      # Direct integration
+│   └── streamlit_app_api_client.py  # API client mode
 │
 ├── backend/                   # FastAPI Backend
 │   ├── Dockerfile
@@ -216,11 +214,8 @@ docker-compose restart backend
 # Acessar backend
 docker exec -it agente_koper_backend bash
 
-# Acessar Ollama
-docker exec -it agente_koper_ollama bash
-
-# Testar Ollama manualmente
-docker exec -it agente_koper_ollama ollama run llama3
+# Acessar frontend
+docker exec -it agente_koper_frontend bash
 ```
 
 ### Verificar saúde dos serviços
@@ -234,9 +229,6 @@ curl http://localhost:8000/health
 
 # Health check do Qdrant
 curl http://localhost:6333/healthz
-
-# Health check do Ollama
-curl http://localhost:11434/api/version
 ```
 
 ---
@@ -244,10 +236,8 @@ curl http://localhost:11434/api/version
 ## 📊 Tecnologias Utilizadas
 
 ### Frontend
-- **Next.js 16** - Framework React
-- **TypeScript** - Type safety
-- **Tailwind CSS** - Styling
-- **Axios** - HTTP client
+- **Streamlit** - Python web framework
+- **Requests** - HTTP client
 
 ### Backend
 - **FastAPI** - Web framework
@@ -256,8 +246,8 @@ curl http://localhost:11434/api/version
 - **Pydantic** - Data validation
 
 ### AI/ML
-- **Ollama** - Local LLM server
-- **Llama3** - Language model
+- **OpenRouter** - Cloud LLM API
+- **6 Modelos Gratuitos** - Meta Llama, Google Gemma, Mistral, Qwen, Microsoft Phi-3, Nous Hermes
 - **Sentence-Transformers** - Embeddings
 - **Qdrant** - Vector database
 

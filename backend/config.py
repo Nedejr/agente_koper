@@ -31,13 +31,26 @@ class Settings(BaseSettings):
     log_level: str = Field(default="INFO", alias="LOG_LEVEL")
     
     # ============================================
-    # Ollama Settings
+    # OpenRouter Settings
     # ============================================
-    ollama_base_url: str = Field(default="http://localhost:11434", alias="OLLAMA_BASE_URL")
-    ollama_model: str = Field(default="llama3", alias="OLLAMA_MODEL")
-    ollama_timeout: int = Field(default=120)  # segundos
-    ollama_temperature: float = Field(default=0.7)
-    ollama_num_ctx: int = Field(default=4096)  # context window
+    openrouter_api_key: str = Field(default="", alias="OPENROUTER_API_KEY")
+    openrouter_base_url: str = Field(default="https://openrouter.ai/api/v1")
+    openrouter_default_model: str = Field(
+        default="meta-llama/llama-3.1-8b-instruct:free",
+        alias="OPENROUTER_DEFAULT_MODEL"
+    )
+    openrouter_timeout: int = Field(default=120)  # segundos
+    openrouter_temperature: float = Field(default=0.7)
+    
+    # Available free models
+    openrouter_free_models: list[str] = Field(default=[
+        "meta-llama/llama-3.1-8b-instruct:free",
+        "google/gemma-2-9b-it:free",
+        "mistralai/mistral-7b-instruct:free",
+        "qwen/qwen-2.5-7b-instruct:free",
+        "microsoft/phi-3-medium-128k-instruct:free",
+        "nousresearch/nous-hermes-2-mixtral-8x7b-dpo:free",
+    ])
     
     # ============================================
     # Qdrant Settings

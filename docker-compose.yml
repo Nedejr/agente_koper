@@ -25,69 +25,6 @@ services:
     networks:
       - agente_koper_network
 
-  # ============================================
-  # OLLAMA - Local LLM Server
-  # ============================================
-  ollama:
-    image: ollama/ollama:latest
-    container_name: agente_koper_ollama
-    ports:
-      - "11434:11434"
-    volumes:
-      - ./data/ollama:/root/.ollama
-    environment:
-      - OLLAMA_HOST=0.0.0.0:11434
-      - OLLAMA_ORIGINS=*
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:11434/api/version"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 30s
-    networks:
-      - agente_koper_network
-    # Descomente se tiver GPU NVIDIA disponível
-    # deploy:
-    #   resources:
-    #     reservations:
-    #       devices:
-    #         - driver: nvidia
-    #           count: 1
-    #           capabilities: [gpu]
-
-  # ============================================
-  # OLLAMA INIT - Pull do modelo Llama3
-  # Executa uma única vez para baixar o modelo
-  # ============================================
-  ollama-init:
-    image: ollama/ollama:latest
-    container_name: agente_koper_ollama_init
-    depends_on:
-      ollama:
-        condition: service_healthy
-    volumes:
-      - ./data/ollama:/root/.ollama
-    environment:
-      - OLLAMA_HOST=http://ollama:11434
-    entrypoint: /bin/bash
-    command:
-      - -c
-      - |
-        echo "🔄 Aguardando Ollama estar pronto..."
-        until curl -sf http://ollama:11434/api/version > /dev/null; do
-          echo "⏳ Esperando Ollama..."
-          sleep 3
-        done
-        
-        echo "Baixando modelo Llama3..."
-        ollama pull llama3
-        
-        echo "Modelo Llama3 instalado com sucesso!"
-        echo "Sistema pronto para uso!"
-    restart: "no"  # Executa apenas uma vez
-    networks:
-      - agente_koper_network
 
   # ============================================
   # BACKEND - FastAPI + LangChain + LangGraph
@@ -103,9 +40,9 @@ services:
       - ./backend:/app
       - ./data/documents:/app/documents
     environment:
-      # Ollama
-      - OLLAMA_BASE_URL=http://ollama:11434
-      - OLLAMA_MODEL=${OLLAMA_MODEL:-llama3}
+      # OpenRouter
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
+      - OPENROUTER_DEFAULT_MODEL=${OPENROUTER_DEFAULT_MODEL:-meta-llama/llama-3.1-8b-instruct:free}
       
       # Qdrant
       - QDRANT_HOST=qdrant
@@ -133,8 +70,6 @@ services:
     depends_on:
       qdrant:
         condition: service_healthy
-      ollama:
-        condition: service_healthy
     restart: unless-stopped
     command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
     networks:
@@ -147,36 +82,37 @@ services:
       start_period: 40s
 
   # ============================================
-  # FRONTEND - Next.js 16
+  # FRONTEND - Streamlit
   # ============================================
   frontend:
     build:
-      context: ./frontend
+      context: .
       dockerfile: Dockerfile
-      target: development
     container_name: agente_koper_frontend
     ports:
-      - "3000:3000"
+      - "8501:8501"
     volumes:
-      - ./frontend:/app
-      - /app/node_modules
-      - /app/.next
+      - ./backend:/app/backend
+      - ./frontend:/app/frontend
+      - ./data:/app/data
     environment:
-      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:8000}
-      - NODE_ENV=development
+      # Backend API URL
+      - API_URL=http://backend:8000
+      # OpenRouter
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
     depends_on:
       backend:
         condition: service_healthy
     restart: unless-stopped
-    command: npm run dev
+    command: streamlit run frontend/streamlit_app.py --server.port=8501 --server.address=0.0.0.0
     networks:
       - agente_koper_network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:8501/_stcore/health"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 60s
+      start_period: 40s
 
 # ============================================
 # NETWORKS
@@ -191,4 +127,3 @@ networks:
 # ============================================
 volumes:
   qdrant_data:
-  ollama_data:

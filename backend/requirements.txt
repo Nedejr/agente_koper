@@ -31,8 +31,7 @@ langgraph>=0.1.0
 # ============================================
 # LLM Integrations
 # ============================================
-# Ollama
-langchain-ollama>=0.1.0
+# OpenRouter (via httpx - already included)
 
 # ============================================
 # Vector Store

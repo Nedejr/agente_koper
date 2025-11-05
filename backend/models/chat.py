@@ -29,6 +29,7 @@ class ChatRequest(BaseModel):
     message: str = Field(..., min_length=1, max_length=5000, description="Mensagem do usuário")
     conversation_id: Optional[str] = Field(default=None, description="ID da conversa (gera automaticamente se não fornecido)")
     user_id: Optional[str] = Field(default=None, description="ID do usuário (opcional)")
+    model: Optional[str] = Field(default=None, description="Modelo OpenRouter a usar (opcional)")
     
     class Config:
         json_schema_extra = {

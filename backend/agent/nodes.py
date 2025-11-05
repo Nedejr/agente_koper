@@ -7,7 +7,7 @@ from typing import Any, Dict
 
 from backend.agent.state import AgentState
 from backend.config import settings
-from backend.llm.ollama_client import ollama_client
+from backend.llm.openrouter_client import openrouter_client
 from backend.llm.prompts import (
     CLASSIFIER_PROMPT,
     OFF_TOPIC_RESPONSE,
@@ -38,10 +38,14 @@ async def classifier_node(state: AgentState) -> Dict[str, Any]:
         # Build classifier prompt
         prompt = CLASSIFIER_PROMPT.format(message=user_message)
         
-        # Call LLM
-        response = await ollama_client.generate(
+        # Get selected model or use default
+        model = state.get("selected_model") or settings.openrouter_default_model
+        
+        # Call LLM via OpenRouter
+        response = await openrouter_client.generate(
             prompt=prompt,
             temperature=0.1,  # Low temperature for consistent classification
+            model=model,
         )
         
         # Parse response (should be "SIM" or "NAO")
@@ -195,10 +199,14 @@ async def evaluator_node(state: AgentState) -> Dict[str, Any]:
         # Build evaluator prompt
         prompt = build_evaluator_prompt(user_message, documents)
         
-        # Call LLM
-        response = await ollama_client.generate(
+        # Get selected model or use default
+        model = state.get("selected_model") or settings.openrouter_default_model
+        
+        # Call LLM via OpenRouter
+        response = await openrouter_client.generate(
             prompt=prompt,
             temperature=0.1,
+            model=model,
         )
         
         # Parse confidence score
@@ -258,10 +266,14 @@ async def generate_answer_node(state: AgentState) -> Dict[str, Any]:
         # Build RAG prompt
         prompt = build_rag_prompt(user_message, state.get("retrieved_documents", []))
         
+        # Get selected model or use default
+        model = state.get("selected_model") or settings.openrouter_default_model
+        
         # Generate response
-        response = await ollama_client.generate(
+        response = await openrouter_client.generate(
             prompt=prompt,
-            temperature=settings.ollama_temperature,
+            temperature=settings.openrouter_temperature,
+            model=model,
         )
         
         log.info("✅ [GENERATE_ANSWER] Response generated successfully")

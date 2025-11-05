@@ -90,23 +90,24 @@ def create_agent_graph() -> StateGraph:
 agent_graph = create_agent_graph()
 
 
-async def run_agent(user_message: str, conversation_id: str) -> AgentState:
+async def run_agent(user_message: str, conversation_id: str, selected_model: str = None) -> AgentState:
     """
     Run the agent workflow
     
     Args:
         user_message: User's input message
         conversation_id: Conversation identifier
+        selected_model: OpenRouter model to use (optional)
         
     Returns:
         Final agent state with response
     """
     from backend.agent.state import create_initial_state
     
-    log.info(f"🚀 Starting agent execution - Conv: {conversation_id}")
+    log.info(f"🚀 Starting agent execution - Conv: {conversation_id} | Model: {selected_model or 'default'}")
     
     # Create initial state
-    initial_state = create_initial_state(user_message, conversation_id)
+    initial_state = create_initial_state(user_message, conversation_id, selected_model)
     
     # Run graph
     final_state = await agent_graph.ainvoke(initial_state)

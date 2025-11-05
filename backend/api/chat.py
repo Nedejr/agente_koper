@@ -54,7 +54,8 @@ async def chat(request: ChatRequest):
         # Run LangGraph agent
         agent_result = await run_agent(
             user_message=request.message,
-            conversation_id=conversation_id
+            conversation_id=conversation_id,
+            selected_model=request.model
         )
         
         # Extract response from agent state

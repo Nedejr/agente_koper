@@ -16,6 +16,7 @@ class AgentState(TypedDict):
     # Input
     user_message: str
     conversation_id: str
+    selected_model: Optional[str]  # OpenRouter model to use
     
     # Classification
     is_about_koper: Optional[bool]
@@ -51,7 +52,8 @@ class ConversationMessage(TypedDict):
 # Initial state factory
 def create_initial_state(
     user_message: str,
-    conversation_id: str
+    conversation_id: str,
+    selected_model: Optional[str] = None
 ) -> AgentState:
     """
     Create initial agent state
@@ -59,6 +61,7 @@ def create_initial_state(
     Args:
         user_message: User's input message
         conversation_id: Unique conversation identifier
+        selected_model: OpenRouter model to use (optional)
         
     Returns:
         Initial AgentState
@@ -66,6 +69,7 @@ def create_initial_state(
     return AgentState(
         user_message=user_message,
         conversation_id=conversation_id,
+        selected_model=selected_model,
         is_about_koper=None,
         classifier_confidence=None,
         retrieved_documents=None,

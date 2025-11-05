@@ -16,10 +16,13 @@ O Koper ERP é um sistema de gestão empresarial. Perguntas sobre:
 - Dúvidas sobre configurações
 - Problemas técnicos com o sistema
 - Integrações e recursos
+- Saudações e conversas iniciais (oi, olá, bom dia, etc.)
 
 Devem ser classificadas como relacionadas ao Koper.
 
-Perguntas genéricas não relacionadas ao sistema (clima, esportes, conversas casuais, etc.) devem ser classificadas como NÃO relacionadas.
+IMPORTANTE: Saudações simples (oi, olá, hello, bom dia, etc.) devem ser classificadas como SIM, pois são formas de iniciar uma conversa sobre o sistema.
+
+Apenas perguntas claramente não relacionadas ao contexto empresarial (clima, esportes, receitas culinárias, etc.) devem ser classificadas como NÃO relacionadas.
 
 Responda APENAS com "SIM" ou "NAO" (sem acentos).
 Resposta:"""

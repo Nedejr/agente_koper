@@ -25,12 +25,13 @@ async def lifespan(app: FastAPI):
     log.info("=" * 60)
     log.info(f"🚀 Iniciando {settings.app_name} v{settings.app_version}")
     log.info(f"🌍 Ambiente: {settings.environment}")
-    log.info(f"🔗 Ollama URL: {settings.ollama_base_url}")
+    log.info(f"🤖 OpenRouter URL: {settings.openrouter_base_url}")
+    log.info(f"🧠 Modelo padrão: {settings.openrouter_default_model}")
     log.info(f"🗄️  Qdrant URL: {settings.qdrant_url}")
     log.info("=" * 60)
     
     # Verificar conexões (opcional)
-    # await check_ollama_connection()
+    # await check_openrouter_connection()
     # await check_qdrant_connection()
     
     yield

@@ -9,8 +9,11 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Copia requirements e instala dependências Python
-COPY requirements.txt .
+COPY backend/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
+
+# Instala Streamlit
+RUN pip install streamlit requests
 
 # Copia o código da aplicação
 COPY . .

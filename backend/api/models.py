@@ -25,14 +25,21 @@ async def list_models():
     """
     models = settings.openrouter_free_models
     
-    # Model metadata
+    # Model metadata (verified working on OpenRouter)
     models_info = [
         {
-            "id": "meta-llama/llama-3.1-8b-instruct:free",
-            "name": "Meta Llama 3.1 8B",
-            "description": "Excelente para conversação e atendimento",
+            "id": "meta-llama/llama-3.2-3b-instruct:free",
+            "name": "Meta Llama 3.2 3B",
+            "description": "Rápido e eficiente para conversação",
             "context": "128k tokens",
             "recommended": True,
+        },
+        {
+            "id": "meta-llama/llama-3.2-1b-instruct:free",
+            "name": "Meta Llama 3.2 1B",
+            "description": "Muito rápido, ideal para respostas simples",
+            "context": "128k tokens",
+            "recommended": False,
         },
         {
             "id": "google/gemma-2-9b-it:free",
@@ -49,24 +56,17 @@ async def list_models():
             "recommended": False,
         },
         {
-            "id": "qwen/qwen-2.5-7b-instruct:free",
-            "name": "Qwen 2.5 7B",
+            "id": "qwen/qwen-2-7b-instruct:free",
+            "name": "Qwen 2 7B",
             "description": "Bom balanço qualidade/velocidade",
             "context": "32k tokens",
             "recommended": False,
         },
         {
-            "id": "microsoft/phi-3-medium-128k-instruct:free",
-            "name": "Microsoft Phi-3 Medium",
-            "description": "Grande contexto, ótimo para documentos",
+            "id": "microsoft/phi-3-mini-128k-instruct:free",
+            "name": "Microsoft Phi-3 Mini",
+            "description": "Grande contexto, compacto",
             "context": "128k tokens",
-            "recommended": False,
-        },
-        {
-            "id": "nousresearch/nous-hermes-2-mixtral-8x7b-dpo:free",
-            "name": "Nous Hermes 2 Mixtral",
-            "description": "Poderoso, mas mais lento",
-            "context": "32k tokens",
             "recommended": False,
         },
     ]

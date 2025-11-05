@@ -36,20 +36,20 @@ class Settings(BaseSettings):
     openrouter_api_key: str = Field(default="", alias="OPENROUTER_API_KEY")
     openrouter_base_url: str = Field(default="https://openrouter.ai/api/v1")
     openrouter_default_model: str = Field(
-        default="meta-llama/llama-3.1-8b-instruct:free",
+        default="meta-llama/llama-3.2-3b-instruct:free",
         alias="OPENROUTER_DEFAULT_MODEL"
     )
     openrouter_timeout: int = Field(default=120)  # segundos
     openrouter_temperature: float = Field(default=0.7)
     
-    # Available free models
+    # Available free models (verified working)
     openrouter_free_models: list[str] = Field(default=[
-        "meta-llama/llama-3.1-8b-instruct:free",
+        "meta-llama/llama-3.2-3b-instruct:free",
+        "meta-llama/llama-3.2-1b-instruct:free",
         "google/gemma-2-9b-it:free",
         "mistralai/mistral-7b-instruct:free",
-        "qwen/qwen-2.5-7b-instruct:free",
-        "microsoft/phi-3-medium-128k-instruct:free",
-        "nousresearch/nous-hermes-2-mixtral-8x7b-dpo:free",
+        "qwen/qwen-2-7b-instruct:free",
+        "microsoft/phi-3-mini-128k-instruct:free",
     ])
     
     # ============================================

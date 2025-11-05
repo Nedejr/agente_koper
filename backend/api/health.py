@@ -13,17 +13,23 @@ from backend.utils.logger import log
 router = APIRouter()
 
 
-async def check_ollama() -> dict:
-    """Verifica conexão com Ollama"""
+async def check_openrouter() -> dict:
+    """Verifica conexão com OpenRouter"""
     try:
+        if not settings.openrouter_api_key:
+            return {"status": "not_configured", "error": "API key not set"}
+        
         async with httpx.AsyncClient(timeout=5.0) as client:
-            response = await client.get(f"{settings.ollama_base_url}/api/version")
+            response = await client.get(
+                f"{settings.openrouter_base_url}/models",
+                headers={"Authorization": f"Bearer {settings.openrouter_api_key}"}
+            )
             if response.status_code == 200:
-                return {"status": "connected", "version": response.json().get("version")}
+                return {"status": "connected"}
             else:
                 return {"status": "unhealthy", "error": f"HTTP {response.status_code}"}
     except Exception as e:
-        log.warning(f"Ollama não disponível: {str(e)}")
+        log.warning(f"OpenRouter não disponível: {str(e)}")
         return {"status": "disconnected", "error": str(e)}
 
 
@@ -56,15 +62,15 @@ async def health_check():
     - Status da aplicação
     - Versão
     - Ambiente
-    - Status dos serviços externos (Ollama, Qdrant)
+    - Status dos serviços externos (OpenRouter, Qdrant)
     """
     # Verifica serviços externos
-    ollama_status = await check_ollama()
+    openrouter_status = await check_openrouter()
     qdrant_status = await check_qdrant()
     
     # Determina status geral
     overall_status = "healthy"
-    if ollama_status["status"] != "connected" or qdrant_status["status"] != "connected":
+    if openrouter_status["status"] != "connected" or qdrant_status["status"] != "connected":
         overall_status = "degraded"
     
     return HealthCheck(
@@ -72,7 +78,7 @@ async def health_check():
         version=settings.app_version,
         environment=settings.environment,
         services={
-            "ollama": ollama_status,
+            "openrouter": openrouter_status,
             "qdrant": qdrant_status,
         }
     )
@@ -104,14 +110,14 @@ async def readiness():
     Usado pelo Kubernetes para controle de tráfego
     """
     # Verifica se serviços críticos estão disponíveis
-    ollama_status = await check_ollama()
+    openrouter_status = await check_openrouter()
     qdrant_status = await check_qdrant()
     
-    if ollama_status["status"] == "connected" and qdrant_status["status"] == "connected":
+    if openrouter_status["status"] == "connected" and qdrant_status["status"] == "connected":
         return {"status": "ready"}
     else:
         return {"status": "not_ready", "services": {
-            "ollama": ollama_status["status"],
+            "openrouter": openrouter_status["status"],
             "qdrant": qdrant_status["status"],
         }}
 

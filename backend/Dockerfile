@@ -12,7 +12,8 @@ LABEL description="Agente Koper Backend - RAG Chatbot"
 # Previne arquivos .pyc e habilita unbuffered output
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
-    PYTHONIOENCODING=UTF-8
+    PYTHONIOENCODING=UTF-8 \
+    PYTHONPATH=/app
 
 # Instala dependências do sistema
 RUN apt-get update && apt-get install -y \
@@ -30,11 +31,14 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
-# Copia código da aplicação
-COPY . .
+# Copia código da aplicação para /app/backend
+COPY . ./backend
 
 # Cria diretórios necessários
 RUN mkdir -p /app/documents /app/logs
+
+# Volta para o diretório raiz
+WORKDIR /app
 
 # Expõe porta do FastAPI
 EXPOSE 8000
@@ -44,5 +48,5 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
     CMD curl -f http://localhost:8000/health || exit 1
 
 # Comando padrão (pode ser sobrescrito no docker-compose)
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "backend.main:app", "--host", "0.0.0.0", "--port", "8000"]
 

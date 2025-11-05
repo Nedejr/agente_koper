@@ -1,111 +1,435 @@
-# 🤖 Agente Koper - Chat RAG com Documentos
+# 🤖 Agente Koper - Chatbot RAG com LangGraph
 
-Sistema de Retrieval-Augmented Generation (RAG) para fazer perguntas sobre documentos (PDF, TXT, Markdown) usando LangChain e OpenAI.
+Sistema inteligente de atendimento usando **Retrieval-Augmented Generation (RAG)** para responder dúvidas sobre o **Koper ERP**. Construído com **LangChain**, **LangGraph**, **Next.js 16**, e **Ollama Llama3** local.
 
-## ️ Estrutura do Projeto
+---
+
+## 🏗️ Arquitetura
 
 ```
-agente_koper/
-├── backend/                    # Lógica de negócio
-│   ├── config.py              # Configurações centralizadas
-│   ├── processing.py          # Processamento de documentos (PDF, TXT, MD)
-│   ├── vector_store.py        # Gerenciamento do ChromaDB
-│   └── qa.py                  # Sistema de perguntas e respostas
-├── frontend/                   
-│   └── streamlit_app.py       # Interface Streamlit
-├── backend_api/               # (Opcional) Backend FastAPI
-│   └── app.py                 # API REST
-├── db/                        # ChromaDB (criado automaticamente)
-├── .env                       # Variáveis de ambiente (você cria)
-├── .env.example              # Template
-└── requirements.txt          # Dependências
+┌─────────────────────────────────────────────────────────────┐
+│                    DOCKER COMPOSE                            │
+├─────────────────────────────────────────────────────────────┤
+│                                                               │
+│  ┌──────────────┐   ┌──────────────┐   ┌──────────────┐    │
+│  │   Next.js    │   │   FastAPI    │   │   Qdrant     │    │
+│  │  Frontend    │──▶│   Backend    │──▶│ Vector Store │    │
+│  │  (Port 3000) │   │  (Port 8000) │   │  (Port 6333) │    │
+│  └──────────────┘   └──────┬───────┘   └──────────────┘    │
+│                             │                                 │
+│                             ▼                                 │
+│                     ┌──────────────┐                         │
+│                     │    Ollama    │                         │
+│                     │  Llama3 LLM  │                         │
+│                     │ (Port 11434) │                         │
+│                     └──────────────┘                         │
+│                                                               │
+└─────────────────────────────────────────────────────────────┘
 ```
 
-## 🚀 Instalação e Execução
+---
 
-### 1. Clone o repositório
+## 🚀 Quick Start
+
+### 1️⃣ Clone o repositório
 
 ```bash
 git clone https://github.com/Nedejr/agente_koper.git
 cd agente_koper
 ```
 
-### 2. Crie e ative o ambiente virtual
-
-```bash
-python3 -m venv venv
-source venv/bin/activate  # Linux/Mac
-# ou
-venv\Scripts\activate     # Windows
-```
-
-### 3. Instale as dependências
-
-```bash
-pip install -r requirements.txt
-```
-
-### 4. Configure a chave OpenAI
-
-Crie o arquivo `.env` na raiz do projeto:
+### 2️⃣ Configure as variáveis de ambiente
 
 ```bash
 cp .env.example .env
 ```
 
-Edite o arquivo `.env` e adicione sua chave:
+Edite o arquivo `.env` se necessário (valores padrão já funcionam).
 
-```env
-OPENAI_API_KEY=sk-sua-chave-aqui
-```
-
-### 5. Execute a aplicação
+### 3️⃣ Inicie todos os serviços com Docker
 
 ```bash
-streamlit run frontend/streamlit_app.py
+docker-compose up -d
 ```
 
-Acesse: **http://localhost:8501**
+**Nota**: Na primeira execução, o Ollama irá baixar o modelo Llama3 (~4.7GB). Isso pode levar alguns minutos dependendo da sua conexão.
 
-## 💻 Como Usar
+### 4️⃣ Acompanhe o download do modelo
 
-1. **Upload**: Clique em "Browse files" na sidebar e selecione seus documentos (PDF, TXT ou Markdown)
-2. **Processar**: Clique em "🚀 Processar Documentos"
-3. **Perguntar**: Digite suas perguntas no chat
-4. **Configurar**: Escolha o modelo (GPT-3.5/4o) e ajuste a temperatura
-
-## � Variáveis de Ambiente (.env)
-
-```env
-# Obrigatório
-OPENAI_API_KEY=sk-sua-chave-aqui
-
-# Opcional
-PERSIST_DIR=db              # Diretório do ChromaDB
-CHUNK_SIZE=1000            # Tamanho dos chunks
-CHUNK_OVERLAP=400          # Overlap entre chunks
-TEMPERATURE=0.7            # Criatividade (0-1)
+```bash
+docker logs -f agente_koper_ollama_init
 ```
 
-## 🎯 Funcionalidades
+Aguarde até ver: ✅ **"Modelo Llama3 instalado com sucesso!"**
 
-- ✅ Upload de múltiplos documentos (PDF, TXT, Markdown)
-- ✅ Processamento e chunking inteligente
-- ✅ Busca semântica com ChromaDB
-- ✅ Chat com histórico de conversa
-- ✅ Múltiplos modelos OpenAI (GPT-3.5, GPT-4, GPT-4o)
-- ✅ Interface intuitiva
-- ✅ Suporte a formatação Markdown preservando estrutura
+### 5️⃣ Acesse a aplicação
 
-## � Tecnologias Utilizadas
+- 🖥️ **Frontend (Next.js)**: http://localhost:3000
+- 🔌 **Backend API**: http://localhost:8000/docs
+- 🗄️ **Qdrant Dashboard**: http://localhost:6333/dashboard
 
-- **Python 3.11+**
-- **LangChain** - Framework RAG
-- **OpenAI** - Modelos de linguagem
-- **ChromaDB** - Banco de dados vetorial
-- **Streamlit** - Interface web
-- **PyPDF** - Processamento de PDFs
+---
+
+## 📁 Estrutura do Projeto
+
+```
+agente_koper/
+├── docker-compose.yml          # Orquestração de serviços
+├── .env.example               # Template de variáveis
+├── .dockerignore              # Otimização de builds
+│
+├── frontend/                  # Next.js 16 Application
+│   ├── Dockerfile
+│   ├── package.json
+│   ├── src/
+│   │   ├── app/              # App Router
+│   │   │   ├── page.tsx      # Chat interface
+│   │   │   └── admin/        # Admin panel
+│   │   ├── components/       # React components
+│   │   └── lib/              # API client & utils
+│   └── public/
+│
+├── backend/                   # FastAPI Backend
+│   ├── Dockerfile
+│   ├── requirements.txt
+│   ├── main.py               # Entry point
+│   ├── config.py             # Configurações
+│   ├── api/                  # Routes
+│   ├── agent/                # LangGraph Agent
+│   │   ├── graph.py          # Definição do grafo
+│   │   ├── nodes.py          # Nós do agente
+│   │   ├── router.py         # Lógica de roteamento
+│   │   └── state.py          # Estado do agente
+│   ├── rag/                  # Sistema RAG
+│   │   ├── embeddings.py
+│   │   ├── retriever.py
+│   │   ├── document_processor.py
+│   │   └── vector_store.py
+│   └── llm/                  # Interface com LLMs
+│       ├── ollama_client.py
+│       └── prompts.py
+│
+├── data/                      # Volumes (criado automaticamente)
+│   ├── documents/            # Documentos do Koper ERP
+│   ├── qdrant/               # Vector store data
+│   └── ollama/               # Modelos LLM
+│
+└── tests/                     # Testes
+    ├── unit/
+    └── integration/
+```
+
+---
+
+## 🤖 Como Funciona o Agente
+
+O agente usa **LangGraph** para criar um fluxo inteligente de decisões:
+
+```
+┌─────────────┐
+│   START     │
+└──────┬──────┘
+       │
+       ▼
+┌─────────────────┐
+│  CLASSIFIER     │  ← É sobre Koper ERP?
+└────────┬────────┘
+         │
+    ┌────┴────┐
+    │         │
+   Sim       Não
+    │         │
+    │         ▼
+    │  ┌─────────────────┐
+    │  │  OFF_TOPIC      │
+    │  │  "Não é meu     │
+    │  │   propósito"    │
+    │  └─────────────────┘
+    │
+    ▼
+┌─────────────────┐
+│  RAG_SEARCH     │  ← Busca no Qdrant
+└────────┬────────┘
+         │
+         ▼
+┌─────────────────┐
+│  EVALUATOR      │  ← Avalia qualidade
+└────────┬────────┘
+         │
+    ┌────┴────┐
+    │         │
+  Alta     Baixa
+ Confiança  Confiança
+    │         │
+    │         ▼
+    │  ┌─────────────────┐
+    │  │  HUMAN_HANDOFF  │
+    │  │  "Fale com      │
+    │  │   atendente"    │
+    │  └─────────────────┘
+    │
+    ▼
+┌─────────────────┐
+│ GENERATE_ANSWER │  ← Resposta baseada no RAG
+└─────────────────┘
+```
+
+### Comportamentos do Agente:
+
+1. ✅ **Pergunta sobre Koper + Informação disponível** → Responde com base no RAG
+2. ❌ **Pergunta sobre Koper + Sem informação** → Direciona para humano
+3. 🚫 **Pergunta fora do escopo** → Informa limitação educadamente
+
+---
+
+## 🛠️ Comandos Úteis
+
+### Gerenciar serviços
+
+```bash
+# Iniciar todos os serviços
+docker-compose up -d
+
+# Ver logs de todos os serviços
+docker-compose logs -f
+
+# Ver logs de um serviço específico
+docker-compose logs -f backend
+docker-compose logs -f frontend
+
+# Parar todos os serviços
+docker-compose down
+
+# Parar e remover volumes (limpa dados)
+docker-compose down -v
+
+# Rebuild dos containers
+docker-compose up -d --build
+
+# Restart de um serviço específico
+docker-compose restart backend
+```
+
+### Acessar containers
+
+```bash
+# Acessar backend
+docker exec -it agente_koper_backend bash
+
+# Acessar Ollama
+docker exec -it agente_koper_ollama bash
+
+# Testar Ollama manualmente
+docker exec -it agente_koper_ollama ollama run llama3
+```
+
+### Verificar saúde dos serviços
+
+```bash
+# Status de todos os containers
+docker-compose ps
+
+# Health check do backend
+curl http://localhost:8000/health
+
+# Health check do Qdrant
+curl http://localhost:6333/healthz
+
+# Health check do Ollama
+curl http://localhost:11434/api/version
+```
+
+---
+
+## 📊 Tecnologias Utilizadas
+
+### Frontend
+- **Next.js 16** - Framework React
+- **TypeScript** - Type safety
+- **Tailwind CSS** - Styling
+- **Axios** - HTTP client
+
+### Backend
+- **FastAPI** - Web framework
+- **LangChain** - RAG framework
+- **LangGraph** - Agent orchestration
+- **Pydantic** - Data validation
+
+### AI/ML
+- **Ollama** - Local LLM server
+- **Llama3** - Language model
+- **Sentence-Transformers** - Embeddings
+- **Qdrant** - Vector database
+
+### DevOps
+- **Docker & Docker Compose** - Containerization
+- **Python 3.11+** - Backend runtime
+- **Node.js 20+** - Frontend runtime
+
+---
+
+## ⚙️ Variáveis de Ambiente
+
+Principais variáveis configuráveis no `.env`:
+
+| Variável | Descrição | Padrão |
+|----------|-----------|--------|
+| `OLLAMA_MODEL` | Modelo LLM a usar | `llama3` |
+| `QDRANT_COLLECTION_NAME` | Nome da collection | `koper_knowledge` |
+| `CHUNK_SIZE` | Tamanho dos chunks | `1000` |
+| `TOP_K_RESULTS` | Documentos retornados | `5` |
+| `MIN_SIMILARITY_SCORE` | Score mínimo | `0.7` |
+| `CLASSIFIER_THRESHOLD` | Threshold do classificador | `0.6` |
+| `LOG_LEVEL` | Nível de log | `INFO` |
+
+Veja `.env.example` para todas as variáveis disponíveis.
+
+---
+
+## 📚 Como Adicionar Documentos
+
+### Via Interface Web (Admin Panel)
+
+1. Acesse: http://localhost:3000/admin
+2. Faça upload dos documentos (PDF, TXT, MD)
+3. Aguarde processamento
+4. Documentos estarão disponíveis para busca
+
+### Via API (cURL)
+
+```bash
+curl -X POST http://localhost:8000/api/documents/upload \
+  -F "file=@/path/to/manual_koper.pdf"
+```
+
+### Via Volume Docker
+
+Coloque documentos em `./data/documents/` e use o endpoint de processamento:
+
+```bash
+curl -X POST http://localhost:8000/api/documents/process-all
+```
+
+---
+
+## 🧪 Testando o Sistema
+
+### 1. Testar o Ollama
+
+```bash
+curl http://localhost:11434/api/generate -d '{
+  "model": "llama3",
+  "prompt": "Hello, how are you?",
+  "stream": false
+}'
+```
+
+### 2. Testar o Backend
+
+```bash
+# Health check
+curl http://localhost:8000/health
+
+# Chat simples
+curl -X POST http://localhost:8000/api/chat \
+  -H "Content-Type: application/json" \
+  -d '{
+    "message": "O que é o Koper ERP?",
+    "conversation_id": "test-123"
+  }'
+```
+
+### 3. Testar o Qdrant
+
+```bash
+# Ver collections
+curl http://localhost:6333/collections
+
+# Ver collection específica
+curl http://localhost:6333/collections/koper_knowledge
+```
+
+---
+
+## 🐛 Troubleshooting
+
+### Ollama não baixa o modelo
+
+```bash
+# Verificar logs
+docker logs agente_koper_ollama_init
+
+# Baixar manualmente
+docker exec -it agente_koper_ollama ollama pull llama3
+```
+
+### Backend não inicia
+
+```bash
+# Verificar logs
+docker logs agente_koper_backend
+
+# Verificar se Qdrant e Ollama estão rodando
+docker-compose ps
+```
+
+### Frontend não conecta ao backend
+
+1. Verifique `NEXT_PUBLIC_API_URL` no `.env`
+2. Para acesso externo, use: `http://IP_DO_SERVIDOR:8000`
+
+### Qdrant sem permissão
+
+```bash
+# Ajustar permissões
+chmod -R 777 ./data/qdrant
+```
+
+### Container muito lento
+
+O Llama3 é pesado. Considere:
+- Usar modelo menor: `llama3:8b-instruct-q4_0`
+- Adicionar mais RAM ao Docker
+- Usar GPU (descomentar no docker-compose.yml)
+
+---
+
+## 🚀 Próximos Passos
+
+- [ ] Implementar autenticação JWT
+- [ ] Adicionar suporte a mais formatos (DOCX, XLSX)
+- [ ] Implementar cache de respostas
+- [ ] Dashboard de analytics
+- [ ] Deploy em produção (Kubernetes)
+- [ ] CI/CD pipeline
+- [ ] Testes E2E
+
+---
 
 ## 📄 Licença
 
 MIT License
+
+---
+
+## 👥 Contribuindo
+
+Contribuições são bem-vindas! Por favor:
+
+1. Fork o projeto
+2. Crie uma branch (`git checkout -b feature/NovaFeature`)
+3. Commit suas mudanças (`git commit -m 'Add: nova feature'`)
+4. Push para a branch (`git push origin feature/NovaFeature`)
+5. Abra um Pull Request
+
+---
+
+## 📞 Suporte
+
+Para dúvidas ou problemas:
+- 📧 Email: suporte@koper.com.br
+- 🐛 Issues: [GitHub Issues](https://github.com/Nedejr/agente_koper/issues)
+
+---
+
+**Desenvolvido com ❤️ para Koper ERP**

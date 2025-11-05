@@ -1,43 +1,28 @@
 # ============================================
-# Environment & Secrets
+# Git & Version Control
 # ============================================
-.env
-.env.local
-.env.*.local
-*.pem
-*.key
+.git
+.gitignore
+.gitattributes
+.github
 
 # ============================================
 # Python
 # ============================================
-__pycache__/
+__pycache__
 *.py[cod]
 *$py.class
 *.so
 .Python
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-*.egg-info/
-.installed.cfg
 *.egg
-MANIFEST
-*.manifest
-*.spec
+*.egg-info/
+dist/
+build/
+*.whl
 pip-log.txt
 pip-delete-this-directory.txt
 .pytest_cache/
 .coverage
-.coverage.*
 htmlcov/
 .tox/
 .hypothesis/
@@ -74,7 +59,16 @@ pnpm-lock.yaml
 *.sublime-project
 *.sublime-workspace
 .cursor/
-.cursorignore
+
+# ============================================
+# Environment & Secrets
+# ============================================
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+secrets/
 
 # ============================================
 # Data & Databases
@@ -86,9 +80,25 @@ db/
 *.sqlite3
 
 # ============================================
-# Docker
+# Documentation & Misc
 # ============================================
-docker-compose.override.yml
+*.md
+!README.md
+docs/
+*.pdf
+*.txt
+LICENSE
+
+# ============================================
+# Testing
+# ============================================
+tests/
+test/
+*.test.js
+*.test.ts
+*.spec.js
+*.spec.ts
+coverage/
 
 # ============================================
 # OS
@@ -109,13 +119,3 @@ $RECYCLE.BIN/
 tmp/
 temp/
 
-# ============================================
-# Logs
-# ============================================
-logs/
-*.log
-
-# ============================================
-# Keep empty directories
-# ============================================
-!.gitkeep

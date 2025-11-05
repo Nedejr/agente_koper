@@ -1,68 +1,194 @@
-version: "3.8"
+version: '3.8'
 
 services:
-  # Versão Monorepo - Streamlit standalone
-  app:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: agente_koper_app
+  # ============================================
+  # QDRANT - Vector Database
+  # ============================================
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: agente_koper_qdrant
     ports:
-      - "8501:8501"
+      - "6333:6333"      # HTTP API
+      - "6334:6334"      # gRPC (opcional)
     volumes:
-      - ./db:/app/db
-      - ./backend:/app/backend
-      - ./frontend:/app/frontend
+      - ./data/qdrant:/qdrant/storage
     environment:
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
-      - PERSIST_DIR=db
-      - CHUNK_SIZE=1000
-      - CHUNK_OVERLAP=400
-      - TEMPERATURE=0.7
+      - QDRANT__SERVICE__GRPC_PORT=6334
+      - QDRANT__LOG_LEVEL=INFO
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:6333/healthz"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
     networks:
       - agente_koper_network
 
-  # Backend API (FastAPI) - descomente para usar versão separada
-  # backend_api:
-  #   build:
-  #     context: .
-  #     dockerfile: Dockerfile.api
-  #   container_name: agente_koper_backend
-  #   ports:
-  #     - "8000:8000"
-  #   volumes:
-  #     - ./db:/app/db
-  #     - ./backend:/app/backend
-  #     - ./backend_api:/app/backend_api
-  #   environment:
-  #     - OPENAI_API_KEY=${OPENAI_API_KEY}
-  #     - PERSIST_DIR=db
-  #   restart: unless-stopped
-  #   networks:
-  #     - agente_koper_network
+  # ============================================
+  # OLLAMA - Local LLM Server
+  # ============================================
+  ollama:
+    image: ollama/ollama:latest
+    container_name: agente_koper_ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ./data/ollama:/root/.ollama
+    environment:
+      - OLLAMA_HOST=0.0.0.0:11434
+      - OLLAMA_ORIGINS=*
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11434/api/version"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    networks:
+      - agente_koper_network
+    # Descomente se tiver GPU NVIDIA disponível
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: 1
+    #           capabilities: [gpu]
 
-  # Frontend Streamlit (API Client) - descomente para usar versão separada
-  # frontend_api:
-  #   build:
-  #     context: .
-  #     dockerfile: Dockerfile.frontend
-  #   container_name: agente_koper_frontend
-  #   ports:
-  #     - "8501:8501"
-  #   volumes:
-  #     - ./frontend:/app/frontend
-  #   environment:
-  #     - API_URL=http://backend_api:8000
-  #   depends_on:
-  #     - backend_api
-  #   restart: unless-stopped
-  #   networks:
-  #     - agente_koper_network
+  # ============================================
+  # OLLAMA INIT - Pull do modelo Llama3
+  # Executa uma única vez para baixar o modelo
+  # ============================================
+  ollama-init:
+    image: ollama/ollama:latest
+    container_name: agente_koper_ollama_init
+    depends_on:
+      ollama:
+        condition: service_healthy
+    volumes:
+      - ./data/ollama:/root/.ollama
+    environment:
+      - OLLAMA_HOST=http://ollama:11434
+    entrypoint: /bin/bash
+    command:
+      - -c
+      - |
+        echo "🔄 Aguardando Ollama estar pronto..."
+        until curl -sf http://ollama:11434/api/version > /dev/null; do
+          echo "⏳ Esperando Ollama..."
+          sleep 3
+        done
+        
+        echo "Baixando modelo Llama3..."
+        ollama pull llama3
+        
+        echo "Modelo Llama3 instalado com sucesso!"
+        echo "Sistema pronto para uso!"
+    restart: "no"  # Executa apenas uma vez
+    networks:
+      - agente_koper_network
 
+  # ============================================
+  # BACKEND - FastAPI + LangChain + LangGraph
+  # ============================================
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: agente_koper_backend
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+      - ./data/documents:/app/documents
+    environment:
+      # Ollama
+      - OLLAMA_BASE_URL=http://ollama:11434
+      - OLLAMA_MODEL=${OLLAMA_MODEL:-llama3}
+      
+      # Qdrant
+      - QDRANT_HOST=qdrant
+      - QDRANT_PORT=6333
+      - QDRANT_COLLECTION_NAME=${QDRANT_COLLECTION_NAME:-koper_knowledge}
+      
+      # Backend Config
+      - BACKEND_HOST=0.0.0.0
+      - BACKEND_PORT=8000
+      - ENVIRONMENT=${ENVIRONMENT:-development}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      
+      # RAG Settings
+      - CHUNK_SIZE=${CHUNK_SIZE:-1000}
+      - CHUNK_OVERLAP=${CHUNK_OVERLAP:-200}
+      - TOP_K_RESULTS=${TOP_K_RESULTS:-5}
+      - MIN_SIMILARITY_SCORE=${MIN_SIMILARITY_SCORE:-0.7}
+      
+      # Agent Settings
+      - CLASSIFIER_THRESHOLD=${CLASSIFIER_THRESHOLD:-0.6}
+      - EVALUATOR_MIN_CONFIDENCE=${EVALUATOR_MIN_CONFIDENCE:-0.7}
+      
+      # Embeddings
+      - EMBEDDINGS_MODEL=${EMBEDDINGS_MODEL:-sentence-transformers/all-MiniLM-L6-v2}
+    depends_on:
+      qdrant:
+        condition: service_healthy
+      ollama:
+        condition: service_healthy
+    restart: unless-stopped
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+    networks:
+      - agente_koper_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # ============================================
+  # FRONTEND - Next.js 16
+  # ============================================
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: development
+    container_name: agente_koper_frontend
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - /app/.next
+    environment:
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:8000}
+      - NODE_ENV=development
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+    command: npm run dev
+    networks:
+      - agente_koper_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+# ============================================
+# NETWORKS
+# ============================================
 networks:
   agente_koper_network:
+    name: agente_koper_network
     driver: bridge
 
+# ============================================
+# VOLUMES (opcional - para persistência explícita)
+# ============================================
 volumes:
-  db_data:
+  qdrant_data:
+  ollama_data:

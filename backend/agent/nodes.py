@@ -138,28 +138,70 @@ async def rag_search_node(state: AgentState) -> Dict[str, Any]:
             for doc in documents
         ]
         
-        # Extract images from documents
+        # Extract images from documents with semantic filtering
         images = []
         seen_images = set()  # Avoid duplicates
         
+        # Convert user message to lowercase for matching
+        query_lower = user_message.lower()
+        query_terms = set(query_lower.split())
+        
         for doc in documents:
+            doc_score = doc.get("score", 0.0)
             doc_images = doc["metadata"].get("images", [])
+            
+            log.info(f"📄 Document score: {doc_score:.3f} | Images in metadata: {len(doc_images)}")
+            
+            # Only extract images from reasonably relevant documents (score > 0.4)
+            if doc_score < 0.4:
+                log.info(f"   ⏭️  Skipping document (score too low: {doc_score:.3f})")
+                continue
+            
+            if not doc_images:
+                log.info(f"   ⚠️  Document has no images in metadata")
+                continue
+            
             for img in doc_images:
-                # Use filename as unique identifier
                 img_key = img.get("filename", "")
+                
                 if img_key and img_key not in seen_images:
-                    images.append({
-                        "filename": img.get("filename"),
-                        "path": img.get("path"),
-                        "section": img.get("section"),
-                        "caption": img.get("caption"),
-                        "alt": img.get("alt"),
-                    })
-                    seen_images.add(img_key)
+                    # Calculate semantic relevance of image to query
+                    relevance_score = _calculate_image_relevance(
+                        query_lower,
+                        query_terms,
+                        img.get("section", ""),
+                        img.get("caption", ""),
+                        img.get("alt", "")
+                    )
+                    
+                    log.info(f"   🖼️  {img_key[:40]}... relevance: {relevance_score:.3f}")
+                    
+                    # Only include images with some relevance (> 0.2)
+                    if relevance_score > 0.2:
+                        images.append({
+                            "filename": img.get("filename"),
+                            "path": img.get("path"),
+                            "section": img.get("section"),
+                            "caption": img.get("caption"),
+                            "alt": img.get("alt"),
+                            "relevance_score": relevance_score,
+                        })
+                        seen_images.add(img_key)
+                        log.info(f"      ✅ Image added! Total now: {len(images)}")
+                    else:
+                        log.info(f"      ❌ Image rejected (relevance too low: {relevance_score:.3f})")
+        
+        # Sort images by relevance score (highest first)
+        images.sort(key=lambda x: x.get("relevance_score", 0), reverse=True)
+        
+        log.info(f"📊 Total images found after filtering: {len(images)}")
+        
+        # Limit to top 6 most relevant images
+        images = images[:6]
         
         log.info(
             f"✅ [RAG_SEARCH] Retrieved {len(documents)} documents "
-            f"with {len(images)} images (avg score: {avg_score:.2f})"
+            f"with {len(images)} relevant images (avg score: {avg_score:.2f})"
         )
         
         steps = state.get("processing_steps", [])
@@ -187,6 +229,74 @@ async def rag_search_node(state: AgentState) -> Dict[str, Any]:
             "processing_steps": steps,
             "error": f"RAG search error: {str(e)}",
         }
+
+
+def _calculate_image_relevance(
+    query: str,
+    query_terms: set,
+    section: str,
+    caption: str,
+    alt: str
+) -> float:
+    """
+    Calculate semantic relevance of an image to the user query
+    
+    Args:
+        query: User query in lowercase
+        query_terms: Set of query terms
+        section: Image section name
+        caption: Image caption
+        alt: Image alt text
+        
+    Returns:
+        Relevance score between 0 and 1
+    """
+    score = 0.0
+    
+    # Combine all image text fields
+    image_text = f"{section} {caption} {alt}".lower()
+    image_terms = set(image_text.split())
+    
+    log.info(f"      🔍 Query: '{query[:50]}...' | Section: '{section[:50]}...'")
+    
+    # 1. Check for exact phrase match in caption/section (high weight)
+    if query in image_text:
+        score += 0.5
+        log.info(f"         ✓ Exact phrase match! +0.5")
+    
+    # 2. Calculate term overlap (Jaccard similarity)
+    # Remove common stopwords
+    stopwords = {
+        'o', 'a', 'os', 'as', 'de', 'do', 'da', 'dos', 'das',
+        'em', 'no', 'na', 'nos', 'nas', 'para', 'com', 'por',
+        'e', 'ou', 'que', 'se', 'um', 'uma', 'como', 'é', '?', '!'
+    }
+    
+    query_terms_clean = query_terms - stopwords
+    image_terms_clean = image_terms - stopwords
+    
+    log.info(f"         Query terms: {query_terms_clean}")
+    log.info(f"         Image terms: {list(image_terms_clean)[:10]}")
+    
+    if query_terms_clean and image_terms_clean:
+        intersection = query_terms_clean & image_terms_clean
+        union = query_terms_clean | image_terms_clean
+        jaccard = len(intersection) / len(union) if union else 0
+        
+        if intersection:
+            log.info(f"         ✓ Term overlap: {intersection} | Jaccard: {jaccard:.3f}")
+            score += jaccard * 0.4
+    
+    # 3. Check for key domain terms
+    # If query has specific domain terms, give bonus if image has them too
+    domain_terms_in_query = query_terms_clean & image_terms_clean
+    if len(domain_terms_in_query) >= 2:
+        score += 0.2
+        log.info(f"         ✓ Domain terms bonus! +0.2")
+    
+    log.info(f"         → Final score: {score:.3f}")
+    
+    return min(score, 1.0)  # Cap at 1.0
 
 
 async def evaluator_node(state: AgentState) -> Dict[str, Any]:

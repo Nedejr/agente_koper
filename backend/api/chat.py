@@ -17,6 +17,7 @@ from backend.models.chat import (
     ChatRequest,
     ChatResponse,
     ConversationHistory,
+    ImageMetadata,
     MessageRole,
 )
 from backend.utils.logger import log
@@ -62,6 +63,7 @@ async def chat(request: ChatRequest):
         response_message = agent_result.get("response", "Sorry, I couldn't generate a response.")
         agent_decision_str = agent_result.get("agent_decision", "answer")
         sources = agent_result.get("sources", [])
+        images_data = agent_result.get("images", [])
         evaluator_confidence = agent_result.get("evaluator_confidence")
         
         # Map agent decision to enum
@@ -71,6 +73,29 @@ async def chat(request: ChatRequest):
             "off_topic": AgentDecision.OFF_TOPIC,
         }
         agent_decision = decision_map.get(agent_decision_str, AgentDecision.ANSWER)
+        
+        # Process images - convert paths to API URLs
+        images = []
+        if images_data:
+            for img in images_data:
+                # Extract section from path (e.g., docs/gestao-epi/images/file.png -> gestao-epi)
+                path_parts = img.get("path", "").split("/")
+                if "docs" in path_parts:
+                    docs_idx = path_parts.index("docs")
+                    if docs_idx + 1 < len(path_parts):
+                        section = path_parts[docs_idx + 1]
+                        filename = img.get("filename", "")
+                        
+                        # Build API URL
+                        url = f"/api/images/{section}/{filename}"
+                        
+                        images.append(ImageMetadata(
+                            filename=filename,
+                            section=img.get("section", ""),
+                            caption=img.get("caption", ""),
+                            alt=img.get("alt", ""),
+                            url=url
+                        ))
         
         # Calculate processing time
         processing_time = int((time.time() - start_time) * 1000)
@@ -98,6 +123,7 @@ async def chat(request: ChatRequest):
             message=response_message,
             agent_decision=agent_decision,
             sources=sources if sources else None,
+            images=images if images else None,
             confidence_score=evaluator_confidence,
             processing_time_ms=processing_time,
         )

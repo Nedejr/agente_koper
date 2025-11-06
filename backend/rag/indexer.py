@@ -205,6 +205,44 @@ class Indexer:
                 "error": str(e),
             }
     
+    async def index_documents(
+        self,
+        documents: List[Document],
+        collection_name: Optional[str] = None,
+        document_id: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """
+        Index pre-processed documents directly
+        
+        Args:
+            documents: List of pre-processed document chunks
+            collection_name: Collection name (optional, uses default if not provided)
+            document_id: Document ID (generated if not provided)
+            
+        Returns:
+            Indexing results
+        """
+        document_id = document_id or f"doc-{uuid4().hex[:12]}"
+        
+        try:
+            # Ensure collection exists
+            await self.ensure_collection_exists()
+            
+            # Index the chunks
+            result = await self._index_chunks(documents, document_id)
+            
+            log.info(
+                f"✅ Documents indexed - "
+                f"ID: {document_id} | "
+                f"Chunks: {result['chunks_indexed']}"
+            )
+            
+            return result
+            
+        except Exception as e:
+            log.error(f"❌ Error indexing documents: {str(e)}")
+            raise
+    
     async def _index_chunks(
         self,
         chunks: List[Document],

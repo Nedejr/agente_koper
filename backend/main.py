@@ -10,7 +10,7 @@ from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from backend.api import health, chat, documents, models
+from backend.api import health, chat, documents, models, images
 from backend.config import settings
 from backend.models.chat import ErrorResponse
 from backend.utils.logger import log
@@ -128,6 +128,7 @@ app.include_router(health.router, tags=["Health"])
 app.include_router(chat.router, prefix=settings.api_prefix, tags=["Chat"])
 app.include_router(documents.router, prefix=settings.api_prefix, tags=["Documents"])
 app.include_router(models.router, prefix=settings.api_prefix, tags=["Models"])
+app.include_router(images.router, prefix=settings.api_prefix, tags=["Images"])
 
 
 # ============================================

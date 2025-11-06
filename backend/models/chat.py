@@ -48,12 +48,22 @@ class AgentDecision(str, Enum):
     OFF_TOPIC = "off_topic"  # Fora do escopo
 
 
+class ImageMetadata(BaseModel):
+    """Metadados de uma imagem da documentação"""
+    filename: str = Field(..., description="Nome do arquivo da imagem")
+    section: str = Field(..., description="Seção da documentação")
+    caption: str = Field(..., description="Legenda da imagem")
+    alt: str = Field(..., description="Texto alternativo")
+    url: str = Field(..., description="URL para acessar a imagem via API")
+
+
 class ChatResponse(BaseModel):
     """Response do chat"""
     conversation_id: str
     message: str = Field(..., description="Resposta do agente")
     agent_decision: AgentDecision = Field(..., description="Decisão do agente")
     sources: Optional[List[str]] = Field(default=None, description="Fontes utilizadas (documentos)")
+    images: Optional[List[ImageMetadata]] = Field(default=None, description="Imagens relevantes")
     confidence_score: Optional[float] = Field(default=None, ge=0, le=1, description="Confiança na resposta")
     timestamp: datetime = Field(default_factory=datetime.utcnow)
     processing_time_ms: Optional[int] = Field(default=None, description="Tempo de processamento em ms")

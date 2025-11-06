@@ -14,6 +14,7 @@ from langchain_core.documents import Document
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 from backend.config import settings
+from backend.rag.image_processor import image_processor
 from backend.utils.logger import log
 
 
@@ -77,7 +78,8 @@ class DocumentProcessor:
         self,
         file_path: str,
         metadata: dict = None,
-        file_type: str = "txt"
+        file_type: str = "txt",
+        process_images: bool = True
     ) -> List[Document]:
         """
         Process text file (TXT or MD)
@@ -86,6 +88,7 @@ class DocumentProcessor:
             file_path: Path to text file
             metadata: Additional metadata to attach
             file_type: File type (txt or md)
+            process_images: If True, process image references for markdown files
             
         Returns:
             List of Document chunks
@@ -126,6 +129,14 @@ class DocumentProcessor:
             
             # Split into chunks
             chunks = self._split_documents([document], separators=separators)
+            
+            # Process images for markdown files
+            if (file_type in ["md", "markdown"]) and process_images:
+                doc_dir = os.path.dirname(file_path)
+                chunks = image_processor.process_document_with_images(
+                    chunks,
+                    doc_dir
+                )
             
             log.info(f"✅ {file_type.upper()} processed - {len(chunks)} chunks created")
             

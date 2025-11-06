@@ -7,6 +7,7 @@ import asyncio
 import os
 import sys
 import time
+import requests
 
 # Adiciona o diretório raiz ao path para imports funcionarem
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -17,7 +18,6 @@ from backend.config import settings
 from backend.rag.document_processor import document_processor
 from backend.rag.indexer import indexer
 from backend.rag.retriever import retriever
-from backend.agent.graph import run_agent
 
 # Configuração da página
 st.set_page_config(
@@ -218,6 +218,7 @@ def render_chat_interface():
         content = message.get("content")
         decision = message.get("decision")
         sources = message.get("sources")
+        images = message.get("images", [])
         confidence = message.get("confidence")
         model_used = message.get("model")
         
@@ -228,6 +229,30 @@ def render_chat_interface():
         elif role == "assistant":
             with st.chat_message("assistant", avatar="🤖"):
                 st.write(content)
+                
+                # Mostra imagens do histórico se disponíveis
+                if images:
+                    st.markdown("---")
+                    st.markdown("### 🖼️ Imagens Relacionadas")
+                    
+                    for i in range(0, len(images), 3):
+                        cols = st.columns(3)
+                        for j, img in enumerate(images[i:i+3]):
+                            with cols[j]:
+                                # Usa localhost para que o navegador do usuário possa acessar
+                                img_url = f"http://localhost:8000{img.get('url', '')}"
+                                try:
+                                    st.image(
+                                        img_url,
+                                        caption=img.get('section', ''),
+                                        use_container_width=True
+                                    )
+                                    with st.expander(f"📝 {img.get('filename', '')}", expanded=False):
+                                        st.caption(img.get('caption', ''))
+                                except Exception as e:
+                                    st.warning(f"⚠️ Imagem não disponível: {img.get('filename', '')}")
+                    
+                    st.markdown("---")
                 
                 # Mostra metadados se disponíveis
                 if decision or sources or confidence or model_used:
@@ -260,7 +285,7 @@ def render_chat_interface():
 
 
 def handle_user_question(question: str):
-    """Processa a pergunta usando o LangGraph Agent"""
+    """Processa a pergunta chamando a API HTTP"""
     # Adiciona pergunta ao histórico
     st.session_state["messages"].append({"role": "user", "content": question})
     
@@ -268,33 +293,72 @@ def handle_user_question(question: str):
     with st.chat_message("user", avatar="👤"):
         st.write(question)
     
-    # Gera resposta usando o agente
+    # Gera resposta chamando a API
     with st.chat_message("assistant", avatar="🤖"):
         with st.spinner("Pensando..."):
             try:
-                # Executa o agente LangGraph
+                # Chama a API HTTP
                 start_time = time.time()
                 
-                agent_result = asyncio.run(
-                    run_agent(
-                        user_message=question,
-                        conversation_id=st.session_state["conversation_id"],
-                        selected_model=st.session_state.get("selected_model")
-                    )
+                # URL da API (usa backend quando dentro do Docker, localhost quando local)
+                api_url = os.getenv("API_URL", "http://backend:8000")
+                
+                response_api = requests.post(
+                    f"{api_url}/api/chat",
+                    json={
+                        "message": question,
+                        "conversation_id": st.session_state["conversation_id"],
+                        "model": st.session_state.get("selected_model")
+                    },
+                    timeout=120
                 )
                 
                 processing_time = time.time() - start_time
                 
-                # Extrai informações do resultado
-                response = agent_result.get("response", "Desculpe, não consegui gerar uma resposta.")
-                decision = agent_result.get("agent_decision")
-                sources = agent_result.get("sources", [])
-                confidence = agent_result.get("evaluator_confidence")
-                steps = agent_result.get("processing_steps", [])
-                model_used = st.session_state.get("selected_model")
+                if response_api.status_code == 200:
+                    result = response_api.json()
+                    
+                    # Extrai informações do resultado da API
+                    response = result.get("message", "Desculpe, não consegui gerar uma resposta.")
+                    decision = result.get("agent_decision")
+                    sources = result.get("sources", [])
+                    images = result.get("images", [])  # Já vem com URLs corretas da API
+                    confidence = result.get("confidence_score")
+                    model_used = st.session_state.get("selected_model")
+                else:
+                    raise Exception(f"API retornou status {response_api.status_code}: {response_api.text}")
                 
                 # Mostra resposta
                 st.write(response)
+                
+                # Mostra imagens se disponíveis
+                if images:
+                    st.markdown("---")
+                    st.markdown("### 🖼️ Imagens Relacionadas")
+                    
+                    # Mostra até 3 imagens por linha
+                    for i in range(0, len(images), 3):
+                        cols = st.columns(3)
+                        for j, img in enumerate(images[i:i+3]):
+                            with cols[j]:
+                                # Usa localhost para que o navegador do usuário possa acessar
+                                img_url = f"http://localhost:8000{img.get('url', '')}"
+                                
+                                # Exibe a imagem
+                                try:
+                                    st.image(
+                                        img_url,
+                                        caption=img.get('section', ''),
+                                        use_container_width=True
+                                    )
+                                    
+                                    # Mostra legenda em texto pequeno
+                                    with st.expander(f"📝 {img.get('filename', '')}", expanded=False):
+                                        st.caption(img.get('caption', ''))
+                                except Exception as e:
+                                    st.warning(f"⚠️ Não foi possível carregar: {img.get('filename', '')}")
+                    
+                    st.markdown("---")
                 
                 # Mostra detalhes
                 with st.expander("📋 Detalhes da Resposta", expanded=False):
@@ -318,9 +382,6 @@ def handle_user_question(question: str):
                         for source in sources:
                             st.caption(f"  • {source}")
                     
-                    if steps:
-                        st.caption(f"🔄 **Passos:** {' → '.join(steps)}")
-                    
                     st.caption(f"⏱️ **Tempo:** {processing_time:.2f}s")
                 
                 # Adiciona resposta ao histórico
@@ -329,6 +390,7 @@ def handle_user_question(question: str):
                     "content": response,
                     "decision": decision,
                     "sources": sources,
+                    "images": images,
                     "confidence": confidence,
                     "model": model_used,
                 })

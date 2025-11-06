@@ -114,7 +114,7 @@ async def rag_search_node(state: AgentState) -> Dict[str, Any]:
         state: Current agent state
         
     Returns:
-        Updated state with retrieved documents
+        Updated state with retrieved documents and images
     """
     log.info("📚 [RAG_SEARCH] Searching for relevant documents")
     
@@ -138,9 +138,28 @@ async def rag_search_node(state: AgentState) -> Dict[str, Any]:
             for doc in documents
         ]
         
+        # Extract images from documents
+        images = []
+        seen_images = set()  # Avoid duplicates
+        
+        for doc in documents:
+            doc_images = doc["metadata"].get("images", [])
+            for img in doc_images:
+                # Use filename as unique identifier
+                img_key = img.get("filename", "")
+                if img_key and img_key not in seen_images:
+                    images.append({
+                        "filename": img.get("filename"),
+                        "path": img.get("path"),
+                        "section": img.get("section"),
+                        "caption": img.get("caption"),
+                        "alt": img.get("alt"),
+                    })
+                    seen_images.add(img_key)
+        
         log.info(
             f"✅ [RAG_SEARCH] Retrieved {len(documents)} documents "
-            f"(avg score: {avg_score:.2f})"
+            f"with {len(images)} images (avg score: {avg_score:.2f})"
         )
         
         steps = state.get("processing_steps", [])
@@ -151,6 +170,7 @@ async def rag_search_node(state: AgentState) -> Dict[str, Any]:
             "context": context,
             "retrieval_score": avg_score,
             "sources": list(set(sources)),  # Unique sources
+            "images": images if images else None,
             "processing_steps": steps,
         }
         
@@ -163,6 +183,7 @@ async def rag_search_node(state: AgentState) -> Dict[str, Any]:
             "context": "No documents found due to error.",
             "retrieval_score": 0.0,
             "sources": [],
+            "images": None,
             "processing_steps": steps,
             "error": f"RAG search error: {str(e)}",
         }

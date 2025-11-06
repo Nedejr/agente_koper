@@ -35,6 +35,9 @@ class AgentState(TypedDict):
     response: Optional[str]
     agent_decision: Optional[str]  # "answer", "human_handoff", "off_topic"
     
+    # Images
+    images: Optional[List[dict]]  # List of relevant images with metadata
+    
     # Metadata
     sources: Optional[List[str]]
     processing_steps: Optional[List[str]]
@@ -79,6 +82,7 @@ def create_initial_state(
         evaluator_confidence=None,
         response=None,
         agent_decision=None,
+        images=None,
         sources=None,
         processing_steps=[],
         error=None,

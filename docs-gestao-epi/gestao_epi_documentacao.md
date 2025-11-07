@@ -3,6 +3,10 @@
 Este documento descreve detalhadamente o fluxo de **gestão de Equipamentos de Proteção Individual (EPI)** dentro do sistema.  
 Baseado no tutorial em vídeo e nas telas do **Figma**, o conteúdo cobre desde o **cadastro inicial** até o **gerenciamento completo de estoque, transferências, entregas, devoluções e baixas**.
 
+![Apresentação Completa do Sistema](./videos/Apresentação Gestão de EPI.mp4 "Apresentação Completa - Gestão de EPI")
+
+*Vídeo de apresentação completa do módulo de Gestão de EPI, mostrando todas as funcionalidades do sistema.*
+
 ---
 
 ## 🏠 Dashboard Principal de Suprimentos
@@ -40,6 +44,10 @@ Módulos de **Suprimentos**, **Engenharia** ou **Compras** → Tela **Produtos**
 
 *Modal/formulário de cadastro de produto do tipo EPI — campos obrigatórios e opcionais (incl. CA). Documente validações importantes: tamanho máximo, formatos aceitos e exemplos.*
 
+![Tutorial em Vídeo - Como Cadastrar um Novo EPI](./videos/Como Cadastrar um Novo EPI.mp4 "Tutorial Completo - Cadastro de EPI")
+
+*Vídeo tutorial mostrando passo a passo como cadastrar um novo EPI no sistema.*
+
 ### 🧾 Resultados após o cadastro:
 - Estado vazio (primeiro acesso)  
 - Listagem com EPIs cadastrados
@@ -60,6 +68,10 @@ Menu principal → **Entradas** → **+ Entrada**
 4. Informe **Quantidade** e **Valor**.  
 5. Clique em **Salvar**.
 
+![Tutorial em Vídeo - Como Dar Entrada no Estoque](./videos/Como Dar Entrada (Registro Inicial no Estoque).mp4 "Tutorial - Registro Inicial no Estoque")
+
+*Vídeo demonstrando o processo completo de dar entrada no estoque (registro inicial).*
+
 ✅ O EPI agora consta no estoque do local selecionado.
 
 ---
@@ -77,6 +89,10 @@ Permite mover EPIs entre locais (ex: **Matriz → Filial/Obra**).
 ![Modal de Transferência de EPI](./images/modal-transferencia-de-epi.png "Modal de Transferência de EPI")
 
 *Modal para solicitar transferência de EPI entre locais: escolha origem, destino, quantidade e motivo. Gera transferência com status "Pendente" até confirmação.*
+
+![Tutorial em Vídeo - Como Transferir um EPI](./videos/Como Transferir um EPI (Ex_ Matriz para Filial).mp4 "Tutorial - Transferência de EPI entre Locais")
+
+*Vídeo demonstrando o processo completo de transferência de EPI entre locais (ex: Matriz para Filial).*
 
 **Preencha:**
 - Setor de origem  
@@ -111,6 +127,10 @@ Permite mover EPIs entre locais (ex: **Matriz → Filial/Obra**).
 
 *Relatório detalhado de movimentações (entradas, saídas, transferências, baixas). Útil para auditoria e geração de relatórios em PDF.*
 
+![Tutorial em Vídeo - Como Visualizar Movimentações](./videos/Como Visualizar Movimentações do EPI.mp4 "Tutorial - Visualização de Movimentações")
+
+*Vídeo mostrando como visualizar as movimentações de um EPI no sistema.*
+
 ---
 
 ## 5. Gestão de Contratos de Entrega de EPI
@@ -129,6 +149,10 @@ Antes da entrega ao colaborador, configure o **modelo de contrato**.
 
 *Editor do modelo de contrato: variáveis (nome do colaborador, EPI, data) e visualização do layout final. Importante para garantir consistência legal.*
 
+![Tutorial em Vídeo - Como Configurar o Modelo de Contrato](./videos/Como Configurar o Modelo de Contrato de Entrega.mp4 "Tutorial - Configuração do Modelo de Contrato")
+
+*Vídeo tutorial sobre como configurar o modelo de contrato de entrega de EPI.*
+
 ---
 
 ## 6. Entrega de EPI ao Colaborador
@@ -142,6 +166,10 @@ Antes da entrega ao colaborador, configure o **modelo de contrato**.
 2. Escolha o **colaborador** e a **obra**.  
 3. Defina **setor de origem**, **quantidade** e **data prevista**.  
 4. Clique em **Entregar**.
+
+![Tutorial em Vídeo - Como Entregar EPI ao Colaborador](./videos/Como Entregar o EPI ao Colaborador.mp4 "Tutorial - Entrega de EPI ao Colaborador")
+
+*Vídeo demonstrando o processo completo de entrega de EPI ao colaborador.*
 
 📄 O contrato é gerado e o status muda para **Emitido**.
 
@@ -161,8 +189,16 @@ Clique em **Assinar contrato** para confirmar.
 ### 7.4. Devolução de EPI
 Clique em **Devolver EPI** para registrar devoluções.
 
+![Tutorial em Vídeo - Como Fazer a Devolução de EPI](./videos/Como Fazer a Devolução de um EPI.mp4 "Tutorial - Devolução de EPI")
+
+*Vídeo mostrando como registrar a devolução de um EPI no sistema.*
+
 ### 7.5. Cancelar Entrega
 Clique em **Excluir contrato** antes da assinatura.
+
+![Tutorial em Vídeo - Como Cancelar uma Entrega](./videos/Como Cancelar uma Entrega de EPI.mp4 "Tutorial - Cancelamento de Entrega")
+
+*Vídeo explicando como cancelar uma entrega de EPI.*
 
 ---
 
@@ -175,6 +211,10 @@ Clique em **Excluir contrato** antes da assinatura.
 ### 🔹 Passos:
 1. Informe **setor**, **quantidade**, **data** e **motivo** (Dano, Vencimento ou Descarte).  
 2. Clique em **Salvar**.
+
+![Tutorial em Vídeo - Como Dar Baixa em EPI](./videos/Como Dar Baixa em um EPI (Dano, Vencimento)_.mp4 "Tutorial - Baixa de EPI")
+
+*Vídeo demonstrando o processo de dar baixa em um EPI por dano ou vencimento.*
 
 🗑️ O EPI é removido **permanentemente** do estoque.
 
@@ -189,9 +229,14 @@ Ela garante que itens danificados, vencidos ou descartados não sejam reutilizad
 ![Relatório de Movimentações](./images/exemplo-relatorio-movimentacoes-de-epi.png "Exemplo de Relatório de Movimentações")
 
 *Exemplo de PDF consolidado gerado pela funcionalidade de Relatório: inclui filtros aplicados, período e resumo por local e categoria.*
+
 ### 🔹 Como acessar:
 1. Vá até a página **Movimentações**.  
 2. Clique em **Relatório** → gera um **PDF consolidado**.
+
+![Tutorial em Vídeo - Como Gerar Relatório de Movimentações](./videos/Como Gerar Relatório de Movimentações_.mp4 "Tutorial - Geração de Relatórios")
+
+*Vídeo mostrando como gerar relatórios de movimentações de EPI.*
 
 ---
 

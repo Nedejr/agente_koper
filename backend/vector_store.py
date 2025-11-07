@@ -149,7 +149,8 @@ def add_to_vector_store(
     chunks: List[Document], vector_store: Optional[Chroma] = None
 ) -> Chroma:
     """
-    Adiciona documentos a um vector store existente ou cria um novo
+    Adiciona documentos a um vector store existente ou cria um novo.
+    Se encontrar um banco readonly ou corrompido, remove e recria.
 
     Args:
         chunks: Lista de documentos para adicionar
@@ -160,7 +161,7 @@ def add_to_vector_store(
     """
     if vector_store:
         try:
-            # Adiciona ao vector store existente
+            # Tenta adicionar ao vector store existente
             vector_store.add_documents(chunks)
 
             # Verifica se a adição foi bem-sucedida
@@ -168,12 +169,44 @@ def add_to_vector_store(
 
             return vector_store
         except Exception as e:
-            print(f"❌ Erro ao adicionar documentos ao vector store: {e}")
-            print("🔄 Tentando recriar o vector store...")
+            error_msg = str(e).lower()
+            print(f"❌ Erro ao adicionar documentos: {e}")
+            
+            # Verifica se é erro de readonly ou database error
+            if "readonly" in error_msg or "database error" in error_msg or "1032" in error_msg:
+                print("🔄 Banco de dados readonly detectado. Recriando...")
+            else:
+                print("🔄 Erro desconhecido. Tentando recriar o vector store...")
 
-            # Se falhar, tenta recriar o vector store
+            # Remove o banco corrompido/readonly e recria
             try:
                 delete_vector_store()
+                print("✅ Banco antigo removido")
+            except Exception as del_error:
+                print(f"⚠️ Aviso ao remover banco: {del_error}")
+                # Tenta forçar a remoção
+                persist_directory = get_persist_dir()
+                if os.path.exists(persist_directory):
+                    import shutil
+                    import stat
+                    try:
+                        # Muda permissões recursivamente
+                        for root, dirs, files in os.walk(persist_directory):
+                            for d in dirs:
+                                os.chmod(os.path.join(root, d), stat.S_IRWXU)
+                            for f in files:
+                                os.chmod(os.path.join(root, f), stat.S_IRWXU)
+                        shutil.rmtree(persist_directory)
+                        print("✅ Banco removido forçadamente")
+                    except Exception as force_error:
+                        print(f"❌ Erro ao forçar remoção: {force_error}")
+                        raise Exception(
+                            "Não foi possível remover o banco corrompido. "
+                            "Por favor, feche o Streamlit e remova manualmente a pasta 'chroma_db'."
+                        )
+            
+            # Recria o vector store
+            try:
                 return create_vector_store(chunks)
             except Exception as recreate_error:
                 print(f"❌ Erro ao recriar vector store: {recreate_error}")

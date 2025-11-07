@@ -3,6 +3,7 @@ Módulo responsável pelo processamento de arquivos (PDF, TXT, Markdown)
 """
 
 import os
+import re
 import tempfile
 from typing import List
 
@@ -80,7 +81,7 @@ def process_txt_file(file_like) -> List[Document]:
 
 def process_markdown_file(file_like) -> List[Document]:
     """
-    Processa um arquivo Markdown mantendo estrutura e retorna chunks
+    Processa um arquivo Markdown mantendo estrutura, extrai imagens/vídeos e retorna chunks.
 
     Args:
         file_like: Objeto file-like (ex: st.uploaded_file) que possui método .read()
@@ -93,28 +94,57 @@ def process_markdown_file(file_like) -> List[Document]:
     if isinstance(content, bytes):
         content = content.decode("utf-8")
 
-    # Cria um documento único
-    doc = Document(
-        page_content=content, metadata={"source": file_like.name, "type": "markdown"}
-    )
+    # Regex para encontrar imagens no formato ![alt-text](./images/filename.png "title")
+    img_regex = r"!\[([^\]]*)\]\(./images/([^\"]+\.(?:png|jpg|jpeg|gif|webp))(?:\s+\"([^\"]*)\")?\)"
+    
+    # Regex para encontrar vídeos no formato ![alt-text](./videos/filename.mp4 "title")
+    # Captura o nome completo do arquivo até .mp4, mesmo com parênteses no nome
+    video_regex = r"!\[([^\]]*)\]\(./videos/([^\"]+\.mp4)(?:\s+\"([^\"]*)\")?\)"
 
-    # Divide em chunks preservando estrutura markdown
+    # Encontra todas as imagens e vídeos
+    images_found = re.findall(img_regex, content)
+    videos_found = re.findall(video_regex, content)
+    
+    # Substitui as sintaxes por tags que o frontend entende
+    content_processed = re.sub(img_regex, r"[image: \2]", content)
+    content_processed = re.sub(video_regex, r"[video: \2]", content_processed)
+
+    # Divide o conteúdo em chunks primeiro
     text_splitter = RecursiveCharacterTextSplitter(
         chunk_size=Config.CHUNK_SIZE,
         chunk_overlap=Config.CHUNK_OVERLAP,
-        separators=[
-            "\n## ",
-            "\n### ",
-            "\n#### ",
-            "\n\n",
-            "\n",
-            ". ",
-            " ",
-            "",
-        ],  # Respeita títulos markdown
+        separators=["\n## ", "\n### ", "\n#### ", "\n\n", "\n", ". ", " ", ""],
     )
+    text_chunks = text_splitter.split_text(content_processed)
 
-    chunks = text_splitter.split_documents([doc])
+    # Cria um Document para cada chunk e associa os metadados corretos
+    chunks = []
+    for text_chunk in text_chunks:
+        doc = Document(
+            page_content=text_chunk,
+            metadata={"source": file_like.name, "type": "markdown"},
+        )
+        chunks.append(doc)
+
+    # Para cada chunk, verifica se ele contém tags de imagem/vídeo e adiciona os
+    # nomes dos arquivos correspondentes aos seus metadados.
+    for chunk in chunks:
+        chunk_images = []
+        chunk_videos = []
+        
+        # Procura por imagens
+        for img_name in (img[1] for img in images_found):
+            if f"[image: {img_name}]" in chunk.page_content:
+                chunk_images.append(img_name)
+        
+        # Procura por vídeos
+        for video_name in (video[1] for video in videos_found):
+            if f"[video: {video_name}]" in chunk.page_content:
+                chunk_videos.append(video_name)
+        
+        chunk.metadata["images"] = ",".join(chunk_images)
+        chunk.metadata["videos"] = ",".join(chunk_videos)
+
     return chunks
 
 

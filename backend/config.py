@@ -21,14 +21,17 @@ class Config:
 
     # Modelos disponíveis
     AVAILABLE_MODELS = ["gpt-3.5-turbo", "gpt-4o-mini", "gpt-4o"]
-    DEFAULT_MODEL = "gpt-3.5-turbo"
+    DEFAULT_MODEL = "gpt-4o-mini"
 
     # Processamento de documentos
-    CHUNK_SIZE = int(os.getenv("CHUNK_SIZE", "1000"))
-    CHUNK_OVERLAP = int(os.getenv("CHUNK_OVERLAP", "400"))
+    CHUNK_SIZE = int(os.getenv("CHUNK_SIZE", "1500"))
+    CHUNK_OVERLAP = int(os.getenv("CHUNK_OVERLAP", "500"))
 
     # Temperatura do modelo
-    TEMPERATURE = float(os.getenv("TEMPERATURE", "0.7"))
+    TEMPERATURE = float(os.getenv("TEMPERATURE", "0.2"))
+
+    # Retriever
+    K_RETRIEVER = int(os.getenv("K_RETRIEVER", "2"))
 
     @classmethod
     def validate(cls):

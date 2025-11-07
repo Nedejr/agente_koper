@@ -3,7 +3,9 @@ Frontend Streamlit que consome a API FastAPI
 Use este arquivo quando o backend estiver rodando como API separada
 """
 
+import json
 import os
+import re
 import sys
 
 # Adiciona o diretório raiz ao path
@@ -20,6 +22,38 @@ API_URL = st.secrets.get("API_URL", "http://localhost:8000")
 
 # Configuração da página
 st.set_page_config(page_title="Chat RAG - API Client", page_icon="🤖", layout="wide")
+
+
+@st.cache_data
+def load_image_map():
+    """Carrega o mapeamento de imagens do arquivo JSON."""
+    try:
+        map_path = os.path.join(
+            os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+            "docs-gestao-epi",
+            "images_map.json",
+        )
+        with open(map_path, "r") as f:
+            return json.load(f)
+    except Exception as e:
+        st.error(f"Erro ao carregar o mapa de imagens: {e}")
+        return {}
+
+
+@st.cache_data
+def load_video_map():
+    """Carrega o mapeamento de vídeos do arquivo JSON."""
+    try:
+        map_path = os.path.join(
+            os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+            "docs-gestao-epi",
+            "videos_map.json",
+        )
+        with open(map_path, "r") as f:
+            return json.load(f)
+    except Exception:
+        # Se não houver arquivo de vídeos, retorna dicionário vazio (não é erro crítico)
+        return {}
 
 
 def initialize_session_state():
@@ -207,10 +241,59 @@ def reset_db_api():
         st.error(f"❌ Erro ao resetar database: {str(e)}")
 
 
+def render_message(content: str, image_map: dict, video_map: dict):
+    """Renderiza a mensagem, substituindo tags de imagem e vídeo por mídias reais."""
+    # Regex para encontrar tags de mídia [image: ...] e [video: ...]
+    media_regex = r"\[(image|video):\s*([^\]]+)\]"
+    parts = re.split(media_regex, content)
+
+    i = 0
+    while i < len(parts):
+        part = parts[i]
+        
+        # Verifica se é uma tag de mídia
+        if i > 0 and i % 3 == 1:  # É o tipo de mídia (image ou video)
+            media_type = part
+            media_name = parts[i + 1].strip() if i + 1 < len(parts) else ""
+            
+            if media_type == "image":
+                image_path = image_map.get(media_name)
+                if image_path and os.path.exists(image_path):
+                    # Exibe a imagem usando st.image com opção de expandir
+                    st.image(
+                        image_path,
+                        caption=media_name,
+                        width=400,
+                    )
+                    # Adiciona um botão para visualizar em tamanho real
+                    with st.expander("🔍 Clique para ver em tamanho real"):
+                        st.image(image_path, caption=media_name)
+                else:
+                    st.warning(f"⚠️ Imagem não encontrada: {media_name}")
+            
+            elif media_type == "video":
+                video_path = video_map.get(media_name)
+                if video_path and os.path.exists(video_path):
+                    # Exibe o vídeo usando st.video
+                    st.video(video_path)
+                    st.caption(f"📹 {media_name}")
+                else:
+                    st.warning(f"⚠️ Vídeo não encontrado: {media_name}")
+            
+            i += 2  # Pula o nome da mídia
+        elif part.strip() and i % 3 == 0:
+            # É texto normal
+            st.write(part)
+        
+        i += 1
+
+
 def render_chat_interface():
     """Renderiza a interface principal de chat"""
     st.title("💬 Chat com seus Documentos (RAG)")
     st.caption("Faça perguntas sobre os documentos carregados")
+    image_map = load_image_map()
+    video_map = load_video_map()
 
     # Renderiza mensagens do histórico
     for message in st.session_state.get("messages", []):
@@ -222,16 +305,16 @@ def render_chat_interface():
                 st.write(content)
         elif role == "ai":
             with st.chat_message("assistant", avatar="🤖"):
-                st.write(content)
+                render_message(content, image_map, video_map)
 
     # Input de pergunta
     question = st.chat_input("Como posso ajudar?")
 
     if question:
-        handle_user_question(question)
+        handle_user_question(question, image_map, video_map)
 
 
-def handle_user_question(question: str):
+def handle_user_question(question: str, image_map: dict, video_map: dict):
     """Processa a pergunta do usuário via API"""
     # Adiciona pergunta ao histórico
     st.session_state["messages"].append({"role": "user", "content": question})
@@ -259,8 +342,8 @@ def handle_user_question(question: str):
                     history=chat_history,
                 )
 
-                # Mostra resposta
-                st.write(response)
+                # Mostra resposta com suporte a imagens e vídeos
+                render_message(response, image_map, video_map)
 
                 # Adiciona resposta ao histórico
                 st.session_state["messages"].append({"role": "ai", "content": response})

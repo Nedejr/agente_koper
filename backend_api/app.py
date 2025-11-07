@@ -12,6 +12,7 @@ import os
 # Imports do backend
 import sys
 from typing import List, Optional
+from io import BytesIO
 
 from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
@@ -23,8 +24,6 @@ from backend.config import Config
 from backend.processing import (
     get_document_stats,
     process_markdown_file,
-    process_pdf_file,
-    process_txt_file,
 )
 from backend.qa import ask_question
 from backend.vector_store import (
@@ -46,13 +45,6 @@ class AskRequest(BaseModel):
 class AskResponse(BaseModel):
     answer: str
     model: str
-
-
-class UploadResponse(BaseModel):
-    status: str
-    files_processed: int
-    total_chunks: int
-    stats: dict
 
 
 class StatsResponse(BaseModel):
@@ -81,6 +73,30 @@ app.add_middleware(
 vector_store = None
 
 
+def load_default_documents_api():
+    """Carrega os documentos padrão da pasta docs-gestao-epi"""
+    global vector_store
+    try:
+        doc_path = os.path.join(
+            os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+            "docs-gestao-epi",
+            "gestao_epi_documentacao.md",
+        )
+
+        if os.path.exists(doc_path):
+            with open(doc_path, "rb") as f:
+                file_like = BytesIO(f.read())
+                file_like.name = os.path.basename(doc_path)
+                chunks = process_markdown_file(file_like)
+                vector_store = add_to_vector_store(chunks, vector_store)
+                print(f"✅ Documentos padrão carregados: {file_like.name}")
+        else:
+            print("⚠️ Documento padrão não encontrado!")
+
+    except Exception as e:
+        print(f"❌ Erro ao carregar documentos padrão: {str(e)}")
+
+
 @app.on_event("startup")
 async def startup_event():
     """Inicialização da aplicação"""
@@ -88,6 +104,8 @@ async def startup_event():
     try:
         Config.validate()
         vector_store = load_existing_vector_store()
+        if not vector_store:
+            load_default_documents_api()
         print(f"✅ API iniciada. Vector store carregado: {vector_store is not None}")
     except Exception as e:
         print(f"⚠️ Erro na inicialização: {e}")
@@ -100,7 +118,6 @@ async def root():
         "message": "Agente Koper API",
         "version": "1.0.0",
         "endpoints": {
-            "POST /upload": "Upload de arquivos PDF",
             "POST /ask": "Fazer perguntas",
             "GET /stats": "Estatísticas do vector store",
             "DELETE /reset": "Resetar database",
@@ -114,90 +131,9 @@ async def health_check():
     return {"status": "healthy", "vector_store_loaded": vector_store is not None}
 
 
-@app.post("/upload", response_model=UploadResponse)
-async def upload_documents(files: List[UploadFile] = File(...)):
-    """
-    Upload e processamento de documentos PDF
-
-    Args:
-        files: Lista de arquivos PDF
-
-    Returns:
-        Informações sobre o processamento
-    """
-    global vector_store
-
-    if not files:
-        raise HTTPException(status_code=400, detail="Nenhum arquivo enviado")
-
-    try:
-        all_chunks = []
-
-        # Processa cada arquivo
-        for file in files:
-            # Detecta extensão do arquivo
-            file_extension = file.filename.split(".")[-1].lower()
-            
-            if file_extension not in ["pdf", "txt", "md", "markdown"]:
-                raise HTTPException(
-                    status_code=400,
-                    detail=f"Tipo de arquivo não suportado: {file.filename}. Use PDF, TXT ou Markdown.",
-                )
-
-            # Lê o conteúdo
-            content = await file.read()
-
-            # Processa de acordo com o tipo
-            try:
-                from io import BytesIO
-
-                # Cria objeto file-like
-                file_like = BytesIO(content)
-                file_like.name = file.filename
-
-                if file_extension == "pdf":
-                    chunks = process_pdf_file(file_like)
-                elif file_extension == "txt":
-                    chunks = process_txt_file(file_like)
-                elif file_extension in ["md", "markdown"]:
-                    chunks = process_markdown_file(file_like)
-
-                all_chunks.extend(chunks)
-
-            except Exception as e:
-                raise HTTPException(
-                    status_code=500,
-                    detail=f"Erro ao processar {file.filename}: {str(e)}",
-                )
-
-        # Obtém estatísticas
-        stats = get_document_stats(all_chunks)
-
-        # Adiciona ao vector store
-        vector_store = add_to_vector_store(all_chunks, vector_store)
-
-        return UploadResponse(
-            status="success",
-            files_processed=len(files),
-            total_chunks=len(all_chunks),
-            stats=stats,
-        )
-
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Erro ao processar: {str(e)}")
-
-
 @app.post("/ask", response_model=AskResponse)
 async def ask(request: AskRequest):
-    """
-    Faz uma pergunta ao sistema RAG
-
-    Args:
-        request: Objeto com query, model, temperature e history
-
-    Returns:
-        Resposta gerada pelo modelo
-    """
+    """Faz uma pergunta ao sistema RAG"""
     global vector_store
 
     if not vector_store:
@@ -222,12 +158,7 @@ async def ask(request: AskRequest):
 
 @app.get("/stats", response_model=StatsResponse)
 async def get_stats():
-    """
-    Retorna estatísticas do vector store
-
-    Returns:
-        Estatísticas do database
-    """
+    """Retorna estatísticas do vector store"""
     global vector_store
 
     stats = get_vector_store_stats(vector_store)
@@ -241,12 +172,7 @@ async def get_stats():
 
 @app.delete("/reset")
 async def reset():
-    """
-    Reseta o vector store (remove todos os documentos)
-
-    Returns:
-        Mensagem de confirmação
-    """
+    """Reseta o vector store (remove todos os documentos)"""
     global vector_store
 
     try:
@@ -259,12 +185,7 @@ async def reset():
 
 @app.get("/models")
 async def get_available_models():
-    """
-    Retorna lista de modelos disponíveis
-
-    Returns:
-        Lista de modelos
-    """
+    """Retorna lista de modelos disponíveis"""
     return {"models": Config.AVAILABLE_MODELS, "default": Config.DEFAULT_MODEL}
 
 

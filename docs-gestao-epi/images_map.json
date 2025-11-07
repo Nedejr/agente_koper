@@ -1,72 +1,21 @@
-[
-  {
-    "section": "Dashboard Principal de Suprimentos",
-    "image": "dashboard-principal-de-suprimentos.png",
-    "path": "./images/dashboard-principal-de-suprimentos.png",
-    "caption": "Visão geral do módulo de Suprimentos: mostra KPIs, níveis de estoque por local e atalhos para operações (Entradas, Transferências, Contratos). Use esta tela para ter uma visão rápida do estado dos EPIs.",
-    "alt": "Dashboard Principal de Suprimentos"
-  },
-  {
-    "section": "Cadastro de um Novo EPI - Listagem",
-    "image": "listagem-de-produtos-ponto-de-partida-para-cadastro.png",
-    "path": "./images/listagem-de-produtos-ponto-de-partida-para-cadastro.png",
-    "caption": "Tela de listagem de produtos onde o usuário inicia o cadastro de um novo EPI. Observe os filtros, botão '+ Produto' e colunas principais (nome, categoria, tipo).",
-    "alt": "Listagem de Produtos - Ponto de partida para cadastro"
-  },
-  {
-    "section": "Cadastro de Produtos - Formulário",
-    "image": "cadastro-de-produtos.png",
-    "path": "./images/cadastro-de-produtos.png",
-    "caption": "Modal/formulário de cadastro de produto do tipo EPI — campos obrigatórios e opcionais (incl. CA). Documente validações importantes: tamanho máximo, formatos aceitos e exemplos.",
-    "alt": "Cadastro de Produtos"
-  },
-  {
-    "section": "Transferência de EPI - Solicitação",
-    "image": "modal-transferencia-de-epi.png",
-    "path": "./images/modal-transferencia-de-epi.png",
-    "caption": "Modal para solicitar transferência de EPI entre locais: escolha origem, destino, quantidade e motivo. Gera transferência com status \"Pendente\" até confirmação.",
-    "alt": "Modal de Transferência de EPI"
-  },
-  {
-    "section": "Movimentações de EPI",
-    "image": "movimentacoes-de-epi.png",
-    "path": "./images/movimentacoes-de-epi.png",
-    "caption": "Relatório detalhado de movimentações (entradas, saídas, transferências, baixas). Útil para auditoria e geração de relatórios em PDF.",
-    "alt": "Movimentações de EPI"
-  },
-  {
-    "section": "Gestão de Contratos - Listagem",
-    "image": "tela-listagem-de-modelos-de-contrato.png",
-    "path": "./images/tela-listagem-de-modelos-de-contrato.png",
-    "caption": "Listagem dos modelos de contrato de entrega: crie, edite ou defina um modelo padrão com marcadores automáticos para preenchimento do contrato.",
-    "alt": "Tela de Listagem de Modelos de Contrato"
-  },
-  {
-    "section": "Gestão de Contratos - Edição",
-    "image": "modelo-de-contrato-de-epi.png",
-    "path": "./images/modelo-de-contrato-de-epi.png",
-    "caption": "Editor do modelo de contrato: variáveis (nome do colaborador, EPI, data) e visualização do layout final. Importante para garantir consistência legal.",
-    "alt": "Tela de Detalhe/Edição do Modelo de Contrato"
-  },
-  {
-    "section": "Entrega de EPI ao Colaborador",
-    "image": "modal-entrega-de-epi.png",
-    "path": "./images/modal-entrega-de-epi.png",
-    "caption": "Fluxo de entrega ao colaborador: seleção de modelo de contrato, colaborador, obra, quantidade e data prevista. Gera contrato com status \"Emitido\".",
-    "alt": "Modal de Entrega de EPI"
-  },
-  {
-    "section": "Baixa de EPI",
-    "image": "baixa-de-epi.png",
-    "path": "./images/baixa-de-epi.png",
-    "caption": "Modal para registrar baixa por dano, vencimento ou descarte. Registre setor, quantidade, data e motivo — ação irreversível no estoque.",
-    "alt": "Modal de Dar Baixa em EPI"
-  },
-  {
-    "section": "Relatório de Movimentações - Exemplo",
-    "image": "exemplo-relatorio-movimentacoes-de-epi.png",
-    "path": "./images/exemplo-relatorio-movimentacoes-de-epi.png",
-    "caption": "Exemplo de PDF consolidado gerado pela funcionalidade de Relatório: inclui filtros aplicados, período e resumo por local e categoria.",
-    "alt": "Relatório de Movimentações"
-  }
-]
+{
+    "baixa-de-epi.png": "/home/nedejr/Documentos/DEV/Python/agente_koper/docs-gestao-epi/images/baixa-de-epi.png",
+    "cadastro-de-produtos.png": "/home/nedejr/Documentos/DEV/Python/agente_koper/docs-gestao-epi/images/cadastro-de-produtos.png",
+    "confirmar_transferencia.png": "/home/nedejr/Documentos/DEV/Python/agente_koper/docs-gestao-epi/images/confirmar_transferencia.png",
+    "confirmar-entrada-pendente-da-transferencia.png": "/home/nedejr/Documentos/DEV/Python/agente_koper/docs-gestao-epi/images/confirmar-entrada-pendente-da-transferencia.png",
+    "dashboard-principal-de-suprimentos.png": "/home/nedejr/Documentos/DEV/Python/agente_koper/docs-gestao-epi/images/dashboard-principal-de-suprimentos.png",
+    "detalhes-de-epi.png": "/home/nedejr/Documentos/DEV/Python/agente_koper/docs-gestao-epi/images/detalhes-de-epi.png",
+    "entrada-de-produtos.png": "/home/nedejr/Documentos/DEV/Python/agente_koper/docs-gestao-epi/images/entrada-de-produtos.png",
+    "entrada-pendente-da-transferencia.png": "/home/nedejr/Documentos/DEV/Python/agente_koper/docs-gestao-epi/images/entrada-pendente-da-transferencia.png",
+    "exemplo-relatorio-movimentacoes-de-epi.png": "/home/nedejr/Documentos/DEV/Python/agente_koper/docs-gestao-epi/images/exemplo-relatorio-movimentacoes-de-epi.png",
+    "gerenciamento-de-entrega.png": "/home/nedejr/Documentos/DEV/Python/agente_koper/docs-gestao-epi/images/gerenciamento-de-entrega.png",
+    "listagem-de-produtos-ponto-de-partida-para-cadastro.png": "/home/nedejr/Documentos/DEV/Python/agente_koper/docs-gestao-epi/images/listagem-de-produtos-ponto-de-partida-para-cadastro.png",
+    "modal-entrega-de-epi.png": "/home/nedejr/Documentos/DEV/Python/agente_koper/docs-gestao-epi/images/modal-entrega-de-epi.png",
+    "modal-transferencia-de-epi.png": "/home/nedejr/Documentos/DEV/Python/agente_koper/docs-gestao-epi/images/modal-transferencia-de-epi.png",
+    "modelo-de-contrato-de-epi.png": "/home/nedejr/Documentos/DEV/Python/agente_koper/docs-gestao-epi/images/modelo-de-contrato-de-epi.png",
+    "movimentacoes-de-epi.png": "/home/nedejr/Documentos/DEV/Python/agente_koper/docs-gestao-epi/images/movimentacoes-de-epi.png",
+    "nova-entrada-de-produtos.png": "/home/nedejr/Documentos/DEV/Python/agente_koper/docs-gestao-epi/images/nova-entrada-de-produtos.png",
+    "relatorio-movimentacoes-de-epi.png": "/home/nedejr/Documentos/DEV/Python/agente_koper/docs-gestao-epi/images/relatorio-movimentacoes-de-epi.png",
+    "tela-listagem-de-modelos-de-contrato.png": "/home/nedejr/Documentos/DEV/Python/agente_koper/docs-gestao-epi/images/tela-listagem-de-modelos-de-contrato.png",
+    "transferencia-pendentes.png": "/home/nedejr/Documentos/DEV/Python/agente_koper/docs-gestao-epi/images/transferencia-pendentes.png"
+}

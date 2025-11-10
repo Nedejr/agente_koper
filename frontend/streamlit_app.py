@@ -149,15 +149,15 @@ def process_documents(uploaded_files):
                 chunks, st.session_state["vector_store"]
             )
             st.session_state["documents_loaded"] = True
-            
+
             # Armazena estatísticas do processamento
             st.session_state["last_processing_stats"] = {
                 "files_count": len(uploaded_files),
-                "total_chunks": stats['total_chunks'],
-                "total_characters": stats['total_characters'],
-                "avg_chunk_size": stats['avg_chunk_size']
+                "total_chunks": stats["total_chunks"],
+                "total_characters": stats["total_characters"],
+                "avg_chunk_size": stats["avg_chunk_size"],
             }
-            
+
             st.success(
                 f"""
             ✅ **Documentos processados com sucesso!**
@@ -178,18 +178,20 @@ def render_vector_store_stats():
     if stats["exists"]:
         st.metric("Documentos no DB", stats.get("total_documents", "N/A"))
         st.caption(f"📁 {stats.get('persist_directory', 'N/A')}")
-        
+
         # Mostra estatísticas detalhadas do último processamento
         if "last_processing_stats" in st.session_state:
             proc_stats = st.session_state["last_processing_stats"]
             st.divider()
             st.success("✅ Documentos processados com sucesso!")
-            st.markdown(f"""
+            st.markdown(
+                f"""
 **Arquivos:** {proc_stats['files_count']}  
 **Chunks:** {proc_stats['total_chunks']}  
 **Caracteres:** {proc_stats['total_characters']:,}  
 **Tamanho médio:** {proc_stats['avg_chunk_size']} caracteres
-            """)
+            """
+            )
     else:
         st.info("Nenhum documento carregado ainda")
 
@@ -202,7 +204,7 @@ def reset_database():
             st.session_state["vector_store"] = None
             st.session_state["documents_loaded"] = False
             st.session_state["messages"] = []
-            
+
             # Passo 2: Remove o diretório do banco completamente
             try:
                 delete_vector_store()
@@ -211,11 +213,13 @@ def reset_database():
                 st.warning(f"⚠️ Aviso ao remover DB: {delete_error}")
                 # Tenta forçar a remoção mesmo com erro
                 import shutil
+
                 persist_dir = Config.PERSIST_DIR
                 if os.path.exists(persist_dir):
                     try:
                         # Tenta mudar permissões antes de remover
                         import stat
+
                         for root, dirs, files in os.walk(persist_dir):
                             for d in dirs:
                                 os.chmod(os.path.join(root, d), stat.S_IRWXU)
@@ -225,16 +229,18 @@ def reset_database():
                         st.info("✅ Banco removido forçadamente")
                     except Exception as force_error:
                         st.error(f"❌ Não foi possível remover: {force_error}")
-            
+
             # Passo 3: Recarrega os documentos padrão
             st.info("📄 Recarregando documentos...")
             load_default_documents()
-            
+
         st.success("✅ Database resetado e documentos recarregados com sucesso!")
         st.rerun()
     except Exception as e:
         st.error(f"❌ Erro ao resetar database: {str(e)}")
-        st.info("💡 Tente fechar o Streamlit, remover manualmente a pasta 'chroma_db' e reiniciar.")
+        st.info(
+            "💡 Tente fechar o Streamlit, remover manualmente a pasta 'chroma_db' e reiniciar."
+        )
 
 
 def render_message(content: str, image_map: dict, video_map: dict):
@@ -246,12 +252,12 @@ def render_message(content: str, image_map: dict, video_map: dict):
     i = 0
     while i < len(parts):
         part = parts[i]
-        
+
         # Verifica se é uma tag de mídia
         if i > 0 and i % 3 == 1:  # É o tipo de mídia (image ou video)
             media_type = part
             media_name = parts[i + 1].strip() if i + 1 < len(parts) else ""
-            
+
             if media_type == "image":
                 image_path = image_map.get(media_name)
                 if image_path and os.path.exists(image_path):
@@ -266,21 +272,22 @@ def render_message(content: str, image_map: dict, video_map: dict):
                         st.image(image_path, caption=media_name)
                 else:
                     st.warning(f"⚠️ Imagem não encontrada: {media_name}")
-            
+
             elif media_type == "video":
                 video_path = video_map.get(media_name)
                 if video_path and os.path.exists(video_path):
-                    # Exibe o vídeo usando st.video
-                    st.video(video_path)
-                    st.caption(f"📹 {media_name}")
-                else:
-                    st.warning(f"⚠️ Vídeo não encontrado: {media_name}")
-            
+                    # Exibe o vídeo usando st.video com largura de 80%
+                    col1, col2, col3 = st.columns([0.10, 0.80, 0.10])
+                    with col2:
+                        st.video(video_path)
+                        st.caption(f"📹 {media_name}")
+                # Se o vídeo não existir, simplesmente não exibe nada (ignora silenciosamente)
+
             i += 2  # Pula o nome da mídia
         elif part.strip() and i % 3 == 0:
             # É texto normal
             st.write(part)
-        
+
         i += 1
 
 
@@ -294,7 +301,8 @@ def render_chat_interface():
     # Mensagem de boas-vindas se não houver mensagens
     if not st.session_state.get("messages", []):
         with st.chat_message("assistant", avatar="🤖"):
-            st.markdown("""
+            st.markdown(
+                """
 👋 **Olá! Eu sou o Agente Koper!**
 
 Estou aqui para ajudá-lo com dúvidas sobre **Gestão de EPI** (Equipamentos de Proteção Individual).
@@ -312,8 +320,9 @@ Posso te auxiliar com:
 💡 **Dica:** Posso mostrar vídeos tutoriais para te guiar passo a passo!
 
 Como posso ajudar você hoje?
-            """)
-    
+            """
+            )
+
     for message in st.session_state.get("messages", []):
         role = message.get("role")
         content = message.get("content")
